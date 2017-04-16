@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest package = "org.genecash.garagedoor"
+          xmlns:android = "http://schemas.android.com/apk/res/android"
+          android:versionCode = "1489275371"
+          android:versionName = "11-MAR-2017 06:36:11 PM">
+
+    <uses-permission android:name = "android.permission.INTERNET" />
+    <uses-permission android:name = "android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name = "android.permission.WAKE_LOCK" />
+    <uses-permission android:name = "android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name = "android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name = "android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name = "android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name = "android.permission.WRITE_SECURE_SETTINGS" />
+    <uses-permission android:name = "android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name = "android.permission.BLUETOOTH" />
+    <uses-permission android:name = "android.permission.BLUETOOTH_ADMIN" />
+
+    <uses-feature android:name="android.hardware.location.gps" />
+
+    <application
+        android:allowBackup = "false"
+        android:icon = "@drawable/open_app"
+        android:label = "Garage Door">
+        <activity
+            android:name = ".GarageDoorApp"
+            android:icon = "@drawable/open_app"
+            android:label = "Garage Door"
+            android:launchMode = "singleTop">
+            <intent-filter>
+                <action android:name = "android.intent.action.MAIN" />
+                <category android:name = "android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name = "org.genecash.garagedoor.close" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name = ".GarageStatus"
+            android:icon = "@drawable/status_app"
+            android:label = "Garage Status"
+            android:launchMode = "singleTop"
+            android:screenOrientation = "portrait">
+            <intent-filter>
+                <action android:name = "android.intent.action.MAIN" />
+                <category android:name = "android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name = ".GarageSettings"
+            android:icon = "@drawable/settings_app"
+            android:label = "Garage Settings"
+            android:launchMode = "singleTop"
+            android:screenOrientation = "portrait"
+            android:windowSoftInputMode = "stateHidden">
+            <intent-filter>
+                <action android:name = "android.intent.action.MAIN" />
+                <category android:name = "android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name = ".CloseApp"
+            android:icon = "@drawable/close_app"
+            android:label = "Garage Stop"
+            android:launchMode = "singleTop"
+            android:screenOrientation = "portrait"
+            android:theme = "@android:style/Theme.NoDisplay"
+            android:windowSoftInputMode = "stateHidden">
+            <intent-filter>
+                <action android:name = "android.intent.action.MAIN" />
+                <category android:name = "android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name = "org.genecash.garagedoor.stop" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name = ".ToggleApp"
+            android:icon = "@drawable/settings_app"
+            android:label = "Garage Toggle"
+            android:launchMode = "singleTop"
+            android:screenOrientation = "portrait"
+            android:theme = "@android:style/Theme.NoDisplay"
+            android:windowSoftInputMode = "stateHidden">
+            <intent-filter>
+                <action android:name = "android.intent.action.MAIN" />
+                <category android:name = "android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name = "org.genecash.garagedoor.toggle" />
+            </intent-filter>
+        </activity>
+
+        <receiver android:name = "android.app.admin.DeviceAdminReceiver">
+            <meta-data
+                android:name = "android.app.device_admin"
+                android:resource = "@xml/device_admin" />
+            <intent-filter>
+                <action android:name = "android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name = ".BluetoothReceiver">
+            <intent-filter android:priority = "10000">
+                <action android:name = "android.bluetooth.device.action.ACL_CONNECTED" />
+            </intent-filter>
+            <intent-filter android:priority = "10000">
+                <action android:name = "android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name = ".GarageDoorService"
+            android:enabled = "true"
+            android:exported = "false"
+            android:process = ":GarageDoorService" />
+    </application>
+</manifest>
