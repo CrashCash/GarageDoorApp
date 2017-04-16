@@ -1,3 +1,4 @@
+# GarageDoorApp
 This is the Android application that controls my garage door via a Raspberry Pi
 
 This repository is an Android Studio project.
