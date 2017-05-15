@@ -121,17 +121,18 @@ public class Utilities {
         }
     }
 
-    // logExcept to our own file so that messages don't get lost
+    // log to our own file so that messages don't get lost
     static void log(String msg) {
         Log.i("garagedoor", msg);
         loggerSet.info(msg);
     }
 
-    // logExcept exceptions so everyone sees them
+    // log exceptions so everyone sees them
     static void logExcept(String fcn, Exception e) {
         String msg = Log.getStackTraceString(e);
+        String fcn2 = e.getStackTrace()[0].getMethodName();
         Log.i("garagedoor", fcn, e);
-        loggerSet.info(fcn + " exception:" + msg);
+        loggerSet.info(fcn + "(" + fcn2 + ") exception:" + msg);
     }
 
     // close logging file handlers to get rid of "lck" turdlets

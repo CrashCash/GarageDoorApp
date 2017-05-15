@@ -111,7 +111,7 @@ public class GarageDoorService extends Service {
         }
     };
 
-    // exit when told
+    // toggle opening action
     BroadcastReceiver broadcastReceiverToggle = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -168,15 +168,16 @@ public class GarageDoorService extends Service {
         float longitude = prefs.getFloat(Utilities.PREFS_LONGITUDE, 400);
         radius_open = prefs.getInt(Utilities.PREFS_RADIUS_OPEN, 0);
         radius_rate = prefs.getInt(Utilities.PREFS_RADIUS_RATE, 0);
-        interval_hi = prefs.getInt(Utilities.PREFS_RATE_HI, 0);
-        interval_lo = prefs.getInt(Utilities.PREFS_RATE_LO, 0);
+        interval_hi = prefs.getInt(Utilities.PREFS_RATE_HI, -1);
+        interval_lo = prefs.getInt(Utilities.PREFS_RATE_LO, -1);
 
         // sanity check
-        if (latitude == 400 || longitude == 400 || radius_open == 0 || radius_rate == 0 || interval_hi == 0 || interval_lo == 0) {
+        if (latitude == 400 || longitude == 400 || radius_open == 0 || radius_rate == 0 || interval_hi == -1 || interval_lo == -1) {
             log("preferences not set - exiting");
             Toast.makeText(this, "Preferences not set - exiting", Toast.LENGTH_LONG).show();
             stop = true;
             stopSelf();
+            return;
         }
 
         destination = new Location("destination");
@@ -383,7 +384,9 @@ public class GarageDoorService extends Service {
         }
 
         // disconnect GPS
-        locationManager.removeUpdates(locationListener);
+        if (locationManager != null) {
+            locationManager.removeUpdates(locationListener);
+        }
         if (manageGPS) {
             Utilities.setGPSOn(getContentResolver(), false);
         }
@@ -397,10 +400,14 @@ public class GarageDoorService extends Service {
         unregisterReceiver(broadcastReceiverToggle);
 
         // turn off notifications
-        notifyManager.cancelAll();
+        if (notifyManager != null) {
+            notifyManager.cancelAll();
+        }
         Utilities.stopLogging();
 
-        cpuLock.release();
+        if (cpuLock != null) {
+            cpuLock.release();
+        }
         super.onDestroy();
     }
 
