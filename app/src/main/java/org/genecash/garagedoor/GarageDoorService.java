@@ -25,15 +25,11 @@ import android.os.PowerManager.WakeLock;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.telephony.SubscriptionManager;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.net.Socket;
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -460,8 +456,6 @@ public class GarageDoorService extends Service {
     }
 
     // bring mobile data connection up or down
-    // for the gory details, see
-    // http://stackoverflow.com/questions/26539445/the-setmobiledataenabled-method-is-no-longer-callable-as-of-android-l-and-later
     void setDataEnabled(boolean flag) {
         if (!manageData) {
             return;
@@ -469,51 +463,24 @@ public class GarageDoorService extends Service {
         if (isDataEnabled() == flag) {
             return;
         }
-        try {
-            log("setDataEnabled: " + flag);
-            int state = flag ? 1 : 0;
-            int transactionCode = getTransactionCode(this);
-            SubscriptionManager mSubscriptionManager = (SubscriptionManager) getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
-            // Loop through the subscription list i.e. SIM list.
-            for (int i = 0; i < mSubscriptionManager.getActiveSubscriptionInfoCountMax(); i++) {
-                // Get the active subscription ID for a given SIM card.
-                int subscriptionId = mSubscriptionManager.getActiveSubscriptionInfoList().get(i).getSubscriptionId();
-                // Execute the command via `su` to turn on/off mobile network for a subscription service.
-                String command = "service call phone " + transactionCode + " i32 " + subscriptionId + " i32 " + state;
-                if (executeCommandViaSu("-c", command)) {
-                    return;
-                } else {
-                    Toast.makeText(this, "Could not update SIM", Toast.LENGTH_LONG).show();
-                }
-            }
-            Toast.makeText(this, "Could not find SIM", Toast.LENGTH_LONG).show();
-        } catch (Exception e) {
-            logExcept("setDataEnabled", e);
-            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        log("setDataEnabled: " + flag);
+        String command;
+        if (flag) {
+            command = "svc data enable";
+        } else {
+            command = "svc data disable";
         }
-    }
-
-    // dig out the transaction code for this phone, using reflection
-    int getTransactionCode(Context context) throws Exception {
-        log("getTransactionCode");
-        TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-        Class<?> telephonyClass = Class.forName(telephonyManager.getClass().getName());
-        Method getITelephony = telephonyClass.getDeclaredMethod("getITelephony");
-        getITelephony.setAccessible(true);
-        Object iTelephonyObject = getITelephony.invoke(telephonyManager);
-
-        Class<?> iTelephonyClass = Class.forName(iTelephonyObject.getClass().getName());
-        Class<?> declaringClass = iTelephonyClass.getDeclaringClass();
-        Field setDataEnabled = declaringClass.getDeclaredField("TRANSACTION_setDataEnabled");
-        setDataEnabled.setAccessible(true);
-        return setDataEnabled.getInt(null);
+        if (executeCommandViaSu("-c", command)) {
+            return;
+        } else {
+            Toast.makeText(this, "Could not change mobile data setting", Toast.LENGTH_LONG).show();
+        }
     }
 
     boolean executeCommandViaSu(String option, String command) {
         log("executeCommandViaSu");
-        String su = "su";
         try {
-            Process process = Runtime.getRuntime().exec(new String[]{su, option, command});
+            Process process = Runtime.getRuntime().exec(new String[]{"su", option, command});
             return process.waitFor() == 0;
         } catch (Exception e) {
             logExcept("executeCommandViaSu", e);

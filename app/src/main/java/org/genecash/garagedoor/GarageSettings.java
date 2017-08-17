@@ -20,9 +20,11 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.InputStreamReader;
 import java.math.RoundingMode;
 import java.nio.channels.FileChannel;
 import java.text.DecimalFormat;
@@ -173,9 +175,16 @@ public class GarageSettings extends Activity {
             });
 
             // "fetch certificate" button.
-            findViewById(R.id.fetch).setOnClickListener(new View.OnClickListener() {
+            findViewById(R.id.fetch_cert).setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     fetchCert();
+                }
+            });
+
+            // "fetch IP" button.
+            findViewById(R.id.fetch_ip).setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    fetchIP();
                 }
             });
 
@@ -302,6 +311,54 @@ public class GarageSettings extends Activity {
             String s = "Error copying certificate: " + Log.getStackTraceString(e);
             Toast.makeText(this, s, Toast.LENGTH_LONG).show();
             log(s);
+        }
+    }
+
+    // fetch IP address of external gateway
+    // PING ubuntuforums.org (91.189.94.12) 56(124) bytes of data.
+    // 64 bytes from 91.189.94.12: icmp_seq=1 ttl=51 time=348 ms
+    // RR:     192.168.1.100
+    //         50.88.176.21  <--- external IP address of network gateway
+    //         72.31.218.195
+    //         72.31.218.194
+    //         72.31.194.170
+    //         4.68.70.154
+    //         4.69.182.230
+    //         212.187.138.81
+    //         91.189.88.3
+    //
+    //
+    // --- ubuntuforums.org ping statistics ---
+    // 1 packets transmitted, 1 received, 0% packet loss, time 0ms
+    // rtt min/avg/max/mdev = 348.299/348.299/348.299/0.000 ms
+    void fetchIP() {
+        try {
+            Process process = Runtime.getRuntime().exec(new String[]{"ping", "-n", "-c", "1", "-R", "ubuntuforums.org"});
+            int rc = process.waitFor();
+            if (rc == 0) {
+                boolean flag = false;
+                BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String line;
+                while ((line = br.readLine()) != null) {
+                    if (flag) {
+                        // this line is IP address
+                        edIP.setText(line.trim());
+                        Toast.makeText(this, "IP address fetched!", Toast.LENGTH_LONG).show();
+                        break;
+                    }
+                    if (line.startsWith("RR:")) {
+                        // next line is IP address
+                        flag = true;
+                    }
+                }
+                if (!flag) {
+                    Toast.makeText(this, "IP address was not fetched!", Toast.LENGTH_LONG).show();
+                }
+            } else {
+                Toast.makeText(this, "ping returned: " + rc, Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Error fetching IP address: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 }
