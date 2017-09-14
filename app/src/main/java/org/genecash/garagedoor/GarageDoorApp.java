@@ -6,14 +6,12 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Toast;
 
-import static android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
-import static android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON;
 import static org.genecash.garagedoor.Utilities.log;
 
 public class GarageDoorApp extends Activity {
@@ -21,8 +19,10 @@ public class GarageDoorApp extends Activity {
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            log("onReceive finish");
-            finish();
+            if (Utilities.ACTION_CLOSE.equals(intent.getAction())) {
+                log("onReceive finish");
+                finish();
+            }
         }
     };
 
@@ -30,8 +30,13 @@ public class GarageDoorApp extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app);
-        getWindow().addFlags(FLAG_KEEP_SCREEN_ON | FLAG_TURN_SCREEN_ON);
 
+        // turn screen on
+        Window window = this.getWindow();
+        window.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+        window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
+        window.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         Utilities.setupLogging(this, "app");
         log("Started");
 
@@ -49,7 +54,6 @@ public class GarageDoorApp extends Activity {
         }
         if (ok) {
             registerReceiver(broadcastReceiver, new IntentFilter(Utilities.ACTION_CLOSE));
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
             // make noise?
             Intent i = getIntent();

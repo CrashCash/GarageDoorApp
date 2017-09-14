@@ -14,6 +14,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -48,9 +49,10 @@ public class GarageDoorService extends Service {
     // notifications
     NotificationManager notifyManager;
     Builder notifyBuilder;
-    long lastNotify = 0;
     Uri uriRingtone;
     Uri uriAlert;
+    MediaPlayer player;
+    boolean sound;
     static final int NOTIFICATION_ID = 1;
 
     // network info
@@ -81,9 +83,6 @@ public class GarageDoorService extends Service {
 
     // log debugging messages
     boolean debug = false;
-
-    // play sound
-    boolean sound;
 
     // lock screen
     boolean lockScreen;
@@ -143,9 +142,9 @@ public class GarageDoorService extends Service {
             }
         });
 
-        // this is how you use a custom sound
-        uriAlert = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.whistle);
+        // custom sounds
         uriRingtone = Settings.System.DEFAULT_NOTIFICATION_URI;
+        uriAlert = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.whistle);
 
         registerReceiver(broadcastReceiverStop, new IntentFilter(Utilities.ACTION_STOP));
         registerReceiver(broadcastReceiverToggle, new IntentFilter(Utilities.ACTION_TOGGLE));
@@ -206,18 +205,11 @@ public class GarageDoorService extends Service {
         notifyBuilder = new Notification.Builder(this).setContentTitle("Garage Door Opener").setContentText("Initializing").setSmallIcon(
                 R.drawable.open_app).setOngoing(true).setStyle(new Notification.BigTextStyle());
         startForeground(NOTIFICATION_ID, notifyBuilder.build());
-        lastNotify = System.currentTimeMillis();
 
         // acquire full lock so GPS works (fuck that partial wake lock shit!)
         pm = (PowerManager) getSystemService(POWER_SERVICE);
         cpuLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "GarageCPULock");
         cpuLock.acquire();
-
-        if (lockScreen) {
-            DevicePolicyManager devicePolicyManager = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
-            devicePolicyManager.lockNow();
-            log("screen locked");
-        }
 
         // initialize SSL
         sslSocketFactory = Utilities.initSSL(this);
@@ -255,6 +247,19 @@ public class GarageDoorService extends Service {
                 String time = String.format("%d:%02d", minutes, seconds);
                 notifyUpdate("GPS acquired: " + time, uriRingtone);
                 locationChanged = true;
+
+                // wait for sound to finish, since locking the screen & app shutdown will interfere
+                notifyWait();
+
+                // lock screen
+                if (lockScreen) {
+                    DevicePolicyManager devicePolicyManager = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
+                    devicePolicyManager.lockNow();
+                    log("screen locked");
+                }
+
+                // shut down app
+                sendBroadcast(new Intent(Utilities.ACTION_CLOSE));
             }
 
             int distance = (int) location.distanceTo(destination);
@@ -363,9 +368,6 @@ public class GarageDoorService extends Service {
             }
         }
 
-        // shut down app
-        sendBroadcast(new Intent(Utilities.ACTION_CLOSE));
-
         return START_NOT_STICKY;
     }
 
@@ -414,14 +416,18 @@ public class GarageDoorService extends Service {
 
     // update notification
     void notifyUpdate(String msg, Uri audio) {
-        if (audio != null && sound) {
-            // play sound
-            notifyWait();
-            notifyBuilder.setSound(audio);
-            lastNotify = System.currentTimeMillis();
-        }
         notifyBuilder.setContentText(msg);
         notifyManager.notify(NOTIFICATION_ID, notifyBuilder.build());
+        if (audio != null && sound) {
+            // wait for previous sound to finish
+            notifyWait();
+
+            // play sound
+            log("play sound");
+            player = MediaPlayer.create(this, audio);
+            player.setLooping(false);
+            player.start();
+        }
         log(msg);
     }
 
@@ -435,12 +441,9 @@ public class GarageDoorService extends Service {
 
     // wait for notification sound/vibration to finish playing
     void notifyWait() {
-        if (lastNotify != 0) {
-            int pause = 3 * MILLISECONDS;
-            long time = lastNotify + pause - System.currentTimeMillis();
-            if (time > 0) {
-                sleep(time);
-            }
+        while (player != null && player.isPlaying()) {
+            log("sound_playing");
+            sleep(MILLISECONDS);
         }
     }
 

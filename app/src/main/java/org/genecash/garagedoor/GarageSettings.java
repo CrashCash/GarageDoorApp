@@ -315,9 +315,16 @@ public class GarageSettings extends Activity {
     }
 
     // fetch IP address of external gateway
+    // note that traceroute does not offer this functionality
+    // this only works on the home network, of course
+    //
+    // ping -n -c 1 -R ubuntuforums.org
+    // -n   numeric addresses (do not resolve hostnames)
+    // -c 1 send only one packet
+    // -R   record route (ubuntuforums.org respects this option - most hosts ignore it)
     // PING ubuntuforums.org (91.189.94.12) 56(124) bytes of data.
     // 64 bytes from 91.189.94.12: icmp_seq=1 ttl=51 time=348 ms
-    // RR:     192.168.1.100
+    // RR:     192.168.1.100 <--- our IP address
     //         50.88.176.21  <--- external IP address of network gateway
     //         72.31.218.195
     //         72.31.218.194

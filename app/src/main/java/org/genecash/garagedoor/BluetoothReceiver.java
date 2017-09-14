@@ -43,6 +43,9 @@ public class BluetoothReceiver extends BroadcastReceiver {
                 app.addCategory(Intent.CATEGORY_LAUNCHER);
                 context.startActivity(app);
 
+                // we can't just sleep
+                new Handler().postDelayed(new RestoreBluetooth(), 1 * Utilities.MILLISECONDS);
+
                 // now find input device
                 String hid = null;
                 File folder = new File("/sys/devices/virtual/misc/uhid");
@@ -71,8 +74,6 @@ public class BluetoothReceiver extends BroadcastReceiver {
                     }
                 }
 
-                // we can't just sleep
-                new Handler().postDelayed(new RestoreBluetooth(), 1 * Utilities.MILLISECONDS);
             }
         }
     }
