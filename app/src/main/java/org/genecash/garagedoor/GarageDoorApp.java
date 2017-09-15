@@ -31,7 +31,8 @@ public class GarageDoorApp extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app);
 
-        // turn screen on
+        // turn screen on so the GPS wakes up
+        // we keep the screen on until we get the first location update
         Window window = this.getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
         window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
