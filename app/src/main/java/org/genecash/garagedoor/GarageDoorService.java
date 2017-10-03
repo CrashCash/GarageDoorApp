@@ -41,7 +41,7 @@ import static org.genecash.garagedoor.Utilities.MILLISECONDS;
 import static org.genecash.garagedoor.Utilities.log;
 import static org.genecash.garagedoor.Utilities.sleep;
 
-public class GarageDoorService extends Service {
+public class GarageDoorService extends Service implements LocationListener {
     // locks
     WakeLock cpuLock;
     PowerManager pm;
@@ -74,9 +74,8 @@ public class GarageDoorService extends Service {
     int interval_lo;
     long startGPS;
     boolean rate_low;
-    boolean locationChanged;
+    static boolean locationChanged = false;
     LocationManager locationManager;
-    LocationListener locationListener;
 
     // queue of button press times
     Queue<Long> presses = new ArrayDeque<>();
@@ -221,128 +220,124 @@ public class GarageDoorService extends Service {
             sleep(2 * MILLISECONDS);
         }
 
-        // we are using the old platform location API instead of the Google Location Services API from
-        // Google Play Services, because it's more reliable, and doesn't get randomly screwed by Play updates.
-        // http://developer.android.com/guide/topics/location/strategies.html
-        locationListener = new locationListener();
-
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         setupGPS();
     }
 
-    class locationListener implements LocationListener {
-        @Override
-        public void onLocationChanged(Location location) {
-            log("onLocationChanged");
-            if (stop) {
+    // we are using the old platform location API instead of the Google Location Services API from
+    // Google Play Services, because it's more reliable, and doesn't get randomly screwed by Play updates.
+    // http://developer.android.com/guide/topics/location/strategies.html
+    @Override
+    public void onLocationChanged(Location location) {
+        log("onLocationChanged");
+        if (stop) {
+            return;
+        }
+
+        if (!locationChanged) {
+            // pretty-print the time it took to acquire the GPS location
+            long millis = System.currentTimeMillis() - startGPS;
+            int seconds = (int) ((millis / 1000) % 60);
+            int minutes = (int) ((millis / (1000 * 60)) % 60);
+            // int hours   = (int) ((millis / (1000 * 60 * 60)) % 24);
+            String time = String.format("%d:%02d", minutes, seconds);
+            notifyUpdate("GPS acquired: " + time, uriRingtone);
+            locationChanged = true;
+
+            // wait for sound to finish, since locking the screen & app shutdown will interfere
+            notifyWait();
+
+            // lock screen
+            if (lockScreen) {
+                DevicePolicyManager devicePolicyManager = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
+                devicePolicyManager.lockNow();
+                log("screen locked");
+            }
+
+            // shut down app
+            sendBroadcast(new Intent(Utilities.ACTION_CLOSE));
+        }
+
+        int distance = (int) location.distanceTo(destination);
+        float meters_sec = location.getSpeed();
+        float miles_hour = (float) (meters_sec * 2.23694);
+        log("GPS: " + location.getLatitude() + "," + location.getLongitude() + " " + distance + "m " + meters_sec + "m/s " +
+            miles_hour + "mph");
+
+        if (distance < radius_open) {
+            if (!command_sent) {
+                // tell the Raspberry Pi to open the door
+                notifyUpdate("Opening door", uriRingtone);
+                openDoor();
+                stop = true;
+                log("exiting due to trip complete");
+
+                // give notification sound time to finish
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        stopSelf();
+                    }
+                }, 5 * MILLISECONDS);
                 return;
             }
-
-            if (!locationChanged) {
-                // pretty-print the time it took to acquire the GPS location
-                long millis = System.currentTimeMillis() - startGPS;
-                int seconds = (int) ((millis / 1000) % 60);
-                int minutes = (int) ((millis / (1000 * 60)) % 60);
-                // int hours   = (int) ((millis / (1000 * 60 * 60)) % 24);
-                String time = String.format("%d:%02d", minutes, seconds);
-                notifyUpdate("GPS acquired: " + time, uriRingtone);
-                locationChanged = true;
-
-                // wait for sound to finish, since locking the screen & app shutdown will interfere
-                notifyWait();
-
-                // lock screen
-                if (lockScreen) {
-                    DevicePolicyManager devicePolicyManager = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
-                    devicePolicyManager.lockNow();
-                    log("screen locked");
-                }
-
-                // shut down app
-                sendBroadcast(new Intent(Utilities.ACTION_CLOSE));
-            }
-
-            int distance = (int) location.distanceTo(destination);
-            float meters_sec = location.getSpeed();
-            float miles_hour = (float) (meters_sec * 2.23694);
-            log("GPS: " + location.getLatitude() + "," + location.getLongitude() + " " + distance + "m " + meters_sec + "m/s " +
-                miles_hour + "mph");
-
-            if (distance < radius_open) {
-                if (!command_sent) {
-                    // tell the Raspberry Pi to open the door
-                    notifyUpdate("Opening door", uriRingtone);
-                    openDoor();
-                    stop = true;
-                    log("exiting due to trip complete");
-
-                    // give notification sound time to finish
-                    new Handler().postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            stopSelf();
-                        }
-                    }, 5 * MILLISECONDS);
-                    return;
-                }
-            } else {
-                command_sent = false;
-            }
-
-            // tune data rate to preserve battery
-            if (distance < radius_rate) {
-                // inside the radius, open socket and switch to high rate
-                if (sock == null) {
-                    OpenSocket();
-                }
-                if (rate_low) {
-                    notifyUpdate("switching to high rate", uriAlert);
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_hi * MILLISECONDS, 0, this);
-                    rate = "High";
-                    rate_low = false;
-                }
-                // keep connection alive
-                ping();
-            } else {
-                // outside the radius, close the socket and switch to low rate
-                if (sock != null) {
-                    closeSocket();
-                }
-                if (!rate_low) {
-                    notifyUpdate("switching to low rate");
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_lo * MILLISECONDS, 0, this);
-                    rate = "Low";
-                    rate_low = true;
-                }
-            }
+        } else {
+            command_sent = false;
         }
 
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-            String statusString = "GPS Unknown (" + status + ")";
-            switch (status) {
-                case LocationProvider.AVAILABLE:
-                    statusString = "GPS Available";
-                    break;
-                case LocationProvider.TEMPORARILY_UNAVAILABLE:
-                    statusString = "GPS Temporarily Unavailable";
-                    break;
-                case LocationProvider.OUT_OF_SERVICE:
-                    statusString = "GPS Out Of Service";
-                    break;
+        // tune data rate to preserve battery
+        if (distance < radius_rate) {
+            // inside the radius, open socket and switch to high rate
+            if (sock == null) {
+                OpenSocket();
             }
-            log("onStatusChanged: " + statusString);
+            if (rate_low) {
+                notifyUpdate("switching to high rate", uriAlert);
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_hi * MILLISECONDS, 0, this);
+                rate = "High";
+                rate_low = false;
+            }
+            // keep connection alive
+            ping();
+        } else {
+            // outside the radius, close the socket and switch to low rate
+            if (sock != null) {
+                closeSocket();
+            }
+            if (!rate_low) {
+                notifyUpdate("switching to low rate");
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_lo * MILLISECONDS, 0, this);
+                rate = "Low";
+                rate_low = true;
+            }
         }
+    }
 
-        @Override
-        public void onProviderEnabled(String provider) {
-            log("onProviderEnabled: " + provider);
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+        String statusString = "GPS Unknown (" + status + ")";
+        switch (status) {
+            case LocationProvider.AVAILABLE:
+                statusString = "GPS Available";
+                break;
+            case LocationProvider.TEMPORARILY_UNAVAILABLE:
+                statusString = "GPS Temporarily Unavailable";
+                break;
+            case LocationProvider.OUT_OF_SERVICE:
+                statusString = "GPS Out Of Service";
+                break;
         }
+        log("onStatusChanged: " + statusString);
+    }
 
-        @Override
-        public void onProviderDisabled(String provider) {
-            log("onProviderDisabled: " + provider);
-        }
+    @Override
+    public void onProviderEnabled(String provider) {
+        log("onProviderEnabled: " + provider);
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+        log("onProviderDisabled: " + provider);
     }
 
     @Override
@@ -383,7 +378,7 @@ public class GarageDoorService extends Service {
 
         // disconnect GPS
         if (locationManager != null) {
-            locationManager.removeUpdates(locationListener);
+            locationManager.removeUpdates(this);
         }
         if (manageGPS) {
             Utilities.setGPSOn(getContentResolver(), false);
@@ -499,7 +494,7 @@ public class GarageDoorService extends Service {
         rate_low = false;
         command_sent = false;
         locationChanged = false;
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_hi * MILLISECONDS, 0, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_hi * MILLISECONDS, 0, this);
         startGPS = System.currentTimeMillis();
         notifyUpdate("Waiting for GPS");
     }

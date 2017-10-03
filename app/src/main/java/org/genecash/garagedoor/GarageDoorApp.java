@@ -39,7 +39,7 @@ public class GarageDoorApp extends Activity {
         window.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         Utilities.setupLogging(this, "app");
-        log("Started");
+        log("App started");
 
         // get permissions
         String[] permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_PHONE_STATE,
