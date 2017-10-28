@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name = "device_admin_label">Device Admin Label</string>
-    <string name = "device_admin_description">Device Admin Description</string>
+    <string name = "device_admin_label">Garage Door Device Admin</string>
+    <string name = "device_admin_description">Give permission to lock the device</string>
 </resources>

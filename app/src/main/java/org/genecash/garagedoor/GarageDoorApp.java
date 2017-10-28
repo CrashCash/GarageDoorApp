@@ -2,7 +2,9 @@ package org.genecash.garagedoor;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -28,6 +30,8 @@ public class GarageDoorApp extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        boolean ok = true;
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app);
 
@@ -41,11 +45,11 @@ public class GarageDoorApp extends Activity {
         Utilities.setupLogging(this, "app");
         log("App started");
 
-        // get permissions
+        // see if we have permissions
+        // this won't actually let you grant WRITE_SECURE_SETTINGS, but it will let you tell if it's granted or not
         String[] permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_PHONE_STATE,
-                                            Manifest.permission.WRITE_EXTERNAL_STORAGE};
-        requestPermissions(permissions, 1);
-        boolean ok = true;
+                                            Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.WRITE_SECURE_SETTINGS};
+        requestPermissions(permissions, 0);
         for (String permission : permissions) {
             if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, permission + " not granted", Toast.LENGTH_LONG).show();
@@ -53,6 +57,39 @@ public class GarageDoorApp extends Activity {
                 finish();
             }
         }
+
+        // see if we can do superuser stuff
+        if (ok) {
+            try {
+                Process process = Runtime.getRuntime().exec(new String[]{"su", "-c", "echo"});
+                if (process.waitFor() != 0) {
+                    Toast.makeText(this, "Unable to perform superuser commands", Toast.LENGTH_LONG).show();
+                    ok = false;
+                    finish();
+                }
+            } catch (Exception e) {
+                Toast.makeText(this, "Unable to perform superuser commands", Toast.LENGTH_LONG).show();
+                ok = false;
+                finish();
+            }
+        }
+
+        // see if we're a device admin
+        if (ok) {
+            DevicePolicyManager devicePolicyManager = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
+            ComponentName adminName = new ComponentName(this, DeviceAdmin.class);
+            if (!devicePolicyManager.isAdminActive(adminName)) {
+                // pop up the screen to ask for admin rights
+                Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
+                intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminName);
+                // intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Give permission to lock device");
+                startActivity(intent);
+                ok = false;
+                finish();
+            }
+        }
+
+        // we're finally good to go
         if (ok) {
             registerReceiver(broadcastReceiver, new IntentFilter(Utilities.ACTION_CLOSE));
 
@@ -73,9 +110,8 @@ public class GarageDoorApp extends Activity {
         try {
             unregisterReceiver(broadcastReceiver);
         } catch (Exception e) {
-            String s = "Error in onDestroy(): " + e.getMessage();
-            Toast.makeText(this, s, Toast.LENGTH_LONG).show();
-            log(s);
+            // there's no way to tell if a receiver has been registered...
+            // you have to just unregister it anyway and deal
         }
         Utilities.stopLogging();
         super.onDestroy();

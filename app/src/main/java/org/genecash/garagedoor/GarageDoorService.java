@@ -1,5 +1,6 @@
 package org.genecash.garagedoor;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.Notification.Builder;
 import android.app.NotificationManager;
@@ -41,6 +42,7 @@ import static org.genecash.garagedoor.Utilities.MILLISECONDS;
 import static org.genecash.garagedoor.Utilities.log;
 import static org.genecash.garagedoor.Utilities.sleep;
 
+@SuppressLint("MissingPermission")
 public class GarageDoorService extends Service implements LocationListener {
     // locks
     WakeLock cpuLock;
