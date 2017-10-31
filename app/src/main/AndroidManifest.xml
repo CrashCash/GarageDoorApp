@@ -18,7 +18,6 @@
 
     <uses-feature android:name = "android.hardware.location.gps" />
     <application
-        android:allowBackup = "false"
         android:icon = "@drawable/open_app"
         android:label = "Garage Door">
         <activity

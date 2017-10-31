@@ -47,6 +47,8 @@ public class GarageDoorApp extends Activity {
 
         // see if we have permissions
         // this won't actually let you grant WRITE_SECURE_SETTINGS, but it will let you tell if it's granted or not
+        // Run the following as root in adb shell to grant it:
+        // pm grant org.genecash.garagedoor android.permission.WRITE_SECURE_SETTINGS
         String[] permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_PHONE_STATE,
                                             Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.WRITE_SECURE_SETTINGS};
         requestPermissions(permissions, 0);
