@@ -3,6 +3,8 @@ package org.genecash.garagedoor;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
@@ -105,6 +107,51 @@ public class Utilities {
         String provider = Settings.Secure.getString(cr, Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
         log("location providers: " + provider);
         return provider.contains(LocationManager.GPS_PROVIDER);
+    }
+
+    // is any network available?
+    static boolean isNetworkAvailable(Context ctx) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    // bring mobile data connection up or down
+    static boolean setDataEnabled(ContentResolver cr, boolean flag) {
+        if (isDataEnabled(cr) == flag) {
+            return true;
+        }
+        log("setDataEnabled: " + flag);
+        String command;
+        if (flag) {
+            command = "svc data enable";
+        } else {
+            command = "svc data disable";
+        }
+        if (executeCommandViaSu("-c", command)) {
+            return true;
+        } else {
+            log("setDataEnabled unable to set data connection state");
+            return false;
+        }
+    }
+
+    // is mobile data enabled?
+    static boolean isDataEnabled(ContentResolver cr) {
+        log("isDataEnabled");
+        return Settings.Global.getInt(cr, "mobile_data", 0) == 1;
+    }
+
+    // execute a superuser command
+    static boolean executeCommandViaSu(String option, String command) {
+        log("executeCommandViaSu");
+        try {
+            Process process = Runtime.getRuntime().exec(new String[]{"su", option, command});
+            return process.waitFor() == 0;
+        } catch (Exception e) {
+            logExcept("executeCommandViaSu", e);
+            return false;
+        }
     }
 
     // go through the pain of setting up our own logging

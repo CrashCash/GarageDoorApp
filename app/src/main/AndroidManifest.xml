@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest package = "org.genecash.garagedoor"
           xmlns:android = "http://schemas.android.com/apk/res/android"
-          android:versionCode = "1509200484"
-          android:versionName = "28-OCT-2017 10:21:24 AM">
+          android:versionCode = "1510698701"
+          android:versionName = "14-NOV-2017 05:31:41 PM">
 
     <uses-permission android:name = "android.permission.INTERNET" />
     <uses-permission android:name = "android.permission.ACCESS_NETWORK_STATE" />
@@ -18,11 +18,11 @@
 
     <uses-feature android:name = "android.hardware.location.gps" />
     <application
-        android:icon = "@drawable/open_app"
+        android:icon = "@drawable/main_app"
         android:label = "Garage Door">
         <activity
             android:name = ".GarageDoorApp"
-            android:icon = "@drawable/open_app"
+            android:icon = "@drawable/main_app"
             android:label = "Garage Door"
             android:launchMode = "singleTop">
             <intent-filter>
@@ -31,6 +31,15 @@
             </intent-filter>
             <intent-filter>
                 <action android:name = "org.genecash.garagedoor.close" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name = ".GarageDoorOpen"
+            android:icon = "@drawable/open_app"
+            android:label = "Open Garage Door">
+            <intent-filter>
+                <action android:name = "android.intent.action.MAIN" />
+                <category android:name = "android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity

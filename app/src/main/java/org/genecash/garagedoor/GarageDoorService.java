@@ -7,6 +7,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -16,8 +17,6 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.media.MediaPlayer;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -39,7 +38,11 @@ import java.util.Queue;
 import javax.net.ssl.SSLSocketFactory;
 
 import static org.genecash.garagedoor.Utilities.MILLISECONDS;
+import static org.genecash.garagedoor.Utilities.RESPONSE;
+import static org.genecash.garagedoor.Utilities.isDataEnabled;
+import static org.genecash.garagedoor.Utilities.isNetworkAvailable;
 import static org.genecash.garagedoor.Utilities.log;
+import static org.genecash.garagedoor.Utilities.setDataEnabled;
 import static org.genecash.garagedoor.Utilities.sleep;
 
 @SuppressLint("MissingPermission")
@@ -199,7 +202,9 @@ public class GarageDoorService extends Service implements LocationListener {
                           radius_open, interval_hi, interval_lo, manageData, manageGPS));
 
         // turn on cell data
-        setDataEnabled(true);
+        if (manageData) {
+            setDataEnabled(getContentResolver(), true);
+        }
 
         // start in foreground so we don't get killed
         notifyManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -388,7 +393,7 @@ public class GarageDoorService extends Service implements LocationListener {
 
         // turn off cell data
         if (manageData) {
-            setDataEnabled(false);
+            setDataEnabled(getContentResolver(), false);
         }
 
         unregisterReceiver(broadcastReceiverStop);
@@ -444,50 +449,6 @@ public class GarageDoorService extends Service implements LocationListener {
         }
     }
 
-    boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-    }
-
-    boolean isDataEnabled() {
-        log("isDataEnabled");
-        return Settings.Global.getInt(getContentResolver(), "mobile_data", 0) == 1;
-    }
-
-    // bring mobile data connection up or down
-    void setDataEnabled(boolean flag) {
-        if (!manageData) {
-            return;
-        }
-        if (isDataEnabled() == flag) {
-            return;
-        }
-        log("setDataEnabled: " + flag);
-        String command;
-        if (flag) {
-            command = "svc data enable";
-        } else {
-            command = "svc data disable";
-        }
-        if (executeCommandViaSu("-c", command)) {
-            return;
-        } else {
-            Toast.makeText(this, "Could not change mobile data setting", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    boolean executeCommandViaSu(String option, String command) {
-        log("executeCommandViaSu");
-        try {
-            Process process = Runtime.getRuntime().exec(new String[]{"su", option, command});
-            return process.waitFor() == 0;
-        } catch (Exception e) {
-            logExcept("executeCommandViaSu", e);
-            return false;
-        }
-    }
-
     // request location updates from GPS
     void setupGPS() {
         log("setupGPS");
@@ -515,23 +476,18 @@ public class GarageDoorService extends Service implements LocationListener {
                 sock.setTcpNoDelay(true);
                 buffRdr = new BufferedReader(new InputStreamReader(sock.getInputStream(), "ASCII"));
                 response = buffRdr.readLine();
-                if (response.equals(Utilities.RESPONSE)) {
+                if (response.equals(RESPONSE)) {
                     break;
                 }
                 log("invalid response: " + response);
             } catch (Exception e) {
                 // sometimes we get a loop of ENETUNREACH (Network is unreachable) even though isDataEnabled() is true
+                ContentResolver cr = getContentResolver();
                 logExcept("OpenSocket", e);
-                log("Network: " + isNetworkAvailable());
-                log("Data: " + isDataEnabled());
-                if (isDataEnabled()) {
-                    setDataEnabled(false);
-                    sleep(15 * MILLISECONDS);
-                }
-                log("Network: " + isNetworkAvailable());
-                log("Data: " + isDataEnabled());
-                if (!isDataEnabled()) {
-                    setDataEnabled(true);
+                log("Network: " + isNetworkAvailable(this));
+                log("Data: " + isDataEnabled(cr));
+                if (!isDataEnabled(cr) && manageData) {
+                    setDataEnabled(cr, true);
                     sleep(15 * MILLISECONDS);
                 }
                 // don't spam the living hell out of the logs

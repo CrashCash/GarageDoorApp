@@ -11,11 +11,6 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FilenameFilter;
-
 public class BluetoothReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -63,34 +58,6 @@ public class BluetoothReceiver extends BroadcastReceiver {
 
                 // we can't just sleep
                 new Handler().postDelayed(new RestoreBluetooth(), 1 * Utilities.MILLISECONDS);
-
-                // now find input device
-                String hid = null;
-                File folder = new File("/sys/devices/virtual/misc/uhid");
-                for (File f : folder.listFiles(new FilenameFilter() {
-                    @Override
-                    public boolean accept(File path, String name) {
-                        return name.toLowerCase().startsWith("input");
-                    }
-                })) {
-                    try {
-                        BufferedReader br = new BufferedReader(new FileReader(new File(f, "name")));
-                        // is this our bluetooth device?
-                        if (br.readLine().equals(btName)) {
-                            // find name of device
-                            File[] dir = f.listFiles(new FilenameFilter() {
-                                @Override
-                                public boolean accept(File path, String name) {
-                                    return name.toLowerCase().startsWith("event");
-                                }
-                            });
-                            hid = "/dev/input/" + dir[0].getName();
-                            Log.i("GarageDoor", "HID device: " + hid);
-                            break;
-                        }
-                    } catch (Exception e) {
-                    }
-                }
             }
         }
     }
