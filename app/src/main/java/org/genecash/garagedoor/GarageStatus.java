@@ -32,6 +32,7 @@ public class GarageStatus extends Activity {
     private InetAddress host;
     private int port;
     private SSLSocketFactory sslSocketFactory;
+    private String password;
     private Socket sockStatus = null;
     private Socket sockCommand = null;
 
@@ -46,6 +47,7 @@ public class GarageStatus extends Activity {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         hostname = prefs.getString(Utilities.PREFS_IP, "");
         port = prefs.getInt(Utilities.PREFS_PORT, 0);
+        password = prefs.getString(Utilities.PREFS_KEYSTORE_PASSWORD, "");
         try {
             host = Inet4Address.getByName(hostname);
         } catch (UnknownHostException e) {
@@ -83,10 +85,10 @@ public class GarageStatus extends Activity {
 
         // initialize SSL
         log("initialize SSL");
-        sslSocketFactory = Utilities.initSSL(this);
+        sslSocketFactory = Utilities.initSSL(this, password);
         log("initialize SSL done");
 
-        // disable NetworkOnMainThreadException
+        // disable NetworkOnMainThreadException - otherwise the onPause takes a crap when it tries to close sockets
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitNetwork().build();
         StrictMode.setThreadPolicy(policy);
     }

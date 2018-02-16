@@ -65,6 +65,7 @@ public class GarageDoorService extends Service implements LocationListener {
     int port;
     SSLSocketFactory sslSocketFactory;
     Socket sock = null;
+    String password;
 
     // do we actually manage the cell data?
     boolean manageData;
@@ -160,6 +161,7 @@ public class GarageDoorService extends Service implements LocationListener {
         hostname = prefs.getString(Utilities.PREFS_IP, "127.0.0.1");
         port = prefs.getInt(Utilities.PREFS_PORT, 17000);
         manageData = prefs.getBoolean(Utilities.PREFS_DATA, true);
+        password = prefs.getString(Utilities.PREFS_KEYSTORE_PASSWORD, "");
 
         // pull GPS preferences
         manageGPS = prefs.getBoolean(Utilities.PREFS_GPS, true);
@@ -173,7 +175,7 @@ public class GarageDoorService extends Service implements LocationListener {
         // sanity check
         if (latitude == 400 || longitude == 400 || radius_open == 0 || radius_rate == 0 || interval_hi == -1 || interval_lo == -1) {
             log("preferences not set - exiting");
-            Toast.makeText(this, "Preferences not set - exiting", Toast.LENGTH_LONG).show();
+            toast("Preferences not set - exiting");
             stop = true;
             stopSelf();
             return;
@@ -218,7 +220,7 @@ public class GarageDoorService extends Service implements LocationListener {
         cpuLock.acquire();
 
         // initialize SSL
-        sslSocketFactory = Utilities.initSSL(this);
+        sslSocketFactory = Utilities.initSSL(this, password);
 
         // turn on GPS
         log("initialize GPS");
@@ -229,6 +231,8 @@ public class GarageDoorService extends Service implements LocationListener {
 
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         setupGPS();
+
+        new Handler().postDelayed(new ShutDownApp(), 10 * Utilities.MILLISECONDS);
     }
 
     // we are using the old platform location API instead of the Google Location Services API from
@@ -250,19 +254,6 @@ public class GarageDoorService extends Service implements LocationListener {
             String time = String.format("%d:%02d", minutes, seconds);
             notifyUpdate("GPS acquired: " + time, uriRingtone);
             locationChanged = true;
-
-            // wait for sound to finish, since locking the screen & app shutdown will interfere
-            notifyWait();
-
-            // lock screen
-            if (lockScreen) {
-                DevicePolicyManager devicePolicyManager = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
-                devicePolicyManager.lockNow();
-                log("screen locked");
-            }
-
-            // shut down app
-            sendBroadcast(new Intent(Utilities.ACTION_CLOSE));
         }
 
         int distance = (int) location.distanceTo(destination);
@@ -304,6 +295,7 @@ public class GarageDoorService extends Service implements LocationListener {
                 rate = "High";
                 rate_low = false;
             }
+
             // keep connection alive
             ping();
         } else {
@@ -377,7 +369,7 @@ public class GarageDoorService extends Service implements LocationListener {
     @Override
     public void onDestroy() {
         log("onDestroy");
-        Toast.makeText(this, "Garage Door application exiting", Toast.LENGTH_LONG).show();
+        toast("Garage Door application exiting");
 
         if (sock != null) {
             closeSocket();
@@ -491,7 +483,7 @@ public class GarageDoorService extends Service implements LocationListener {
                     sleep(15 * MILLISECONDS);
                 }
                 // don't spam the living hell out of the logs
-                sleep(10 * MILLISECONDS);
+                sleep(5 * MILLISECONDS);
             }
         }
         log("end openSocket");
@@ -548,6 +540,27 @@ public class GarageDoorService extends Service implements LocationListener {
                 logExcept("Ping", e);
                 OpenSocket();
             }
+        }
+    }
+
+    // lock screen and shut down app
+    class ShutDownApp implements Runnable {
+        @Override
+        public void run() {
+            log("ShutDownApp");
+
+            // wait for sound to finish, since locking the screen & app shutdown will interfere
+            notifyWait();
+
+            // lock screen
+            if (lockScreen) {
+                DevicePolicyManager devicePolicyManager = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
+                devicePolicyManager.lockNow();
+                log("screen locked");
+            }
+
+            // shut down app
+            sendBroadcast(new Intent(Utilities.ACTION_CLOSE));
         }
     }
 }

@@ -37,20 +37,8 @@ public class GarageSettings extends Activity {
     private LocationListener locationListener;
 
     // display widgets
-    private EditText edIP;
-    private EditText edPort;
-    private EditText edBtName;
-    private EditText edLatitude;
-    private EditText edLongitude;
-    private EditText edRadiusOpen;
-    private EditText edRadiusRate;
-    private EditText edRateHi;
-    private EditText edRateLo;
-    private CheckBox cbData;
-    private CheckBox cbGPS;
-    private CheckBox cbDebug;
-    private CheckBox cbLock;
-    private CheckBox cbNoise;
+    private EditText edIP, edPort, edBtName, edPassword, edLatitude, edLongitude, edRadiusOpen, edRadiusRate, edRateHi, edRateLo;
+    private CheckBox cbData, cbGPS, cbDebug, cbLock, cbNoise;
     private Button bGPS;
 
     private SharedPreferences prefs;
@@ -84,6 +72,7 @@ public class GarageSettings extends Activity {
             edIP = (EditText) findViewById(R.id.ip);
             edPort = (EditText) findViewById(R.id.port);
             edBtName = (EditText) findViewById(R.id.bt_name);
+            edPassword = (EditText) findViewById(R.id.keystore_password);
             edLatitude = (EditText) findViewById(R.id.latitude);
             edLongitude = (EditText) findViewById(R.id.longitude);
             edRadiusOpen = (EditText) findViewById(R.id.radius_open);
@@ -101,6 +90,7 @@ public class GarageSettings extends Activity {
             edIP.setText(prefs.getString(Utilities.PREFS_IP, "99.168.121.221"));
             edPort.setText("" + prefs.getInt(Utilities.PREFS_PORT, 17000));
             edBtName.setText(prefs.getString(Utilities.PREFS_BT_NAME, ""));
+            edPassword.setText(prefs.getString(Utilities.PREFS_KEYSTORE_PASSWORD, ""));
             edLatitude.setText("" + prefs.getFloat(Utilities.PREFS_LATITUDE, 28.543808f));
             edLongitude.setText("" + prefs.getFloat(Utilities.PREFS_LONGITUDE, -81.20185f));
             edRadiusOpen.setText("" + prefs.getInt(Utilities.PREFS_RADIUS_OPEN, 60));
@@ -134,6 +124,7 @@ public class GarageSettings extends Activity {
                     SharedPreferences.Editor editor = prefs.edit();
                     editor.putString(Utilities.PREFS_IP, edIP.getText().toString().trim());
                     editor.putString(Utilities.PREFS_BT_NAME, edBtName.getText().toString().trim());
+                    editor.putString(Utilities.PREFS_KEYSTORE_PASSWORD, edPassword.getText().toString().trim());
                     editor.putBoolean(Utilities.PREFS_DATA, cbData.isChecked());
                     editor.putBoolean(Utilities.PREFS_GPS, cbGPS.isChecked());
                     editor.putBoolean(Utilities.PREFS_DEBUG, cbDebug.isChecked());

@@ -28,6 +28,7 @@ import static org.genecash.garagedoor.Utilities.sleep;
 public class GarageDoorOpen extends Activity {
     String hostname;
     int port;
+    String password;
     ContentResolver cr;
     boolean manageData;
     String command = "OPENCLOSE";
@@ -46,6 +47,7 @@ public class GarageDoorOpen extends Activity {
         hostname = prefs.getString(Utilities.PREFS_IP, "127.0.0.1");
         port = prefs.getInt(Utilities.PREFS_PORT, 17000);
         manageData = prefs.getBoolean(Utilities.PREFS_DATA, true);
+        password = prefs.getString(Utilities.PREFS_KEYSTORE_PASSWORD, "");
 
         cr = getContentResolver();
         if (!isDataEnabled(cr) && manageData) {
@@ -71,7 +73,7 @@ public class GarageDoorOpen extends Activity {
         protected Void doInBackground(Void... voids) {
             Socket sock;
             Context ctx = getApplicationContext();
-            SSLSocketFactory sslSocketFactory = Utilities.initSSL(ctx);
+            SSLSocketFactory sslSocketFactory = Utilities.initSSL(ctx, password);
             while (true) {
                 try {
                     // connect

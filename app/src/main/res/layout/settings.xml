@@ -1,110 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android = "http://schemas.android.com/apk/res/android"
-    android:layout_width = "fill_parent"
-    android:layout_height = "fill_parent"
-    android:orientation = "vertical">
-    <TableLayout
+<LinearLayout xmlns:android = "http://schemas.android.com/apk/res/android"
+              android:layout_width = "fill_parent"
+              android:layout_height = "fill_parent"
+              android:orientation = "vertical">
+    <LinearLayout
         android:layout_width = "fill_parent"
         android:layout_height = "wrap_content">
-        <TableRow
-            android:layout_width = "fill_parent"
-            android:layout_height = "wrap_content">
-            <TextView
-                android:layout_width = "wrap_content"
-                android:layout_height = "wrap_content"
-                android:layout_gravity = "center_vertical|right"
-                android:text = "External IP:" />
-            <EditText
-                android:id = "@+id/ip"
-                android:layout_width = "wrap_content"
-                android:layout_height = "wrap_content"
-                android:inputType = "text" />
-            <TextView
-                android:layout_width = "wrap_content"
-                android:layout_height = "wrap_content"
-                android:layout_gravity = "center_vertical|right"
-                android:text = "Port:" />
-            <EditText
-                android:id = "@+id/port"
-                android:layout_width = "wrap_content"
-                android:layout_height = "wrap_content"
-                android:gravity = "right"
-                android:inputType = "number" />
-            <Button
-                android:id = "@+id/fetch_ip"
-                android:layout_width = "wrap_content"
-                android:layout_height = "wrap_content"
-                android:text = "Fetch IP" />
-        </TableRow>
-    </TableLayout>
-    <TableLayout
+        <TextView
+            android:layout_width = "wrap_content"
+            android:layout_height = "wrap_content"
+            android:layout_gravity = "center_vertical|right"
+            android:text = "External IP:" />
+        <EditText
+            android:id = "@+id/ip"
+            android:layout_width = "wrap_content"
+            android:layout_height = "wrap_content"
+            android:inputType = "text" />
+        <TextView
+            android:layout_width = "wrap_content"
+            android:layout_height = "wrap_content"
+            android:layout_gravity = "center_vertical|right"
+            android:text = "Port:" />
+        <EditText
+            android:id = "@+id/port"
+            android:layout_width = "wrap_content"
+            android:layout_height = "wrap_content"
+            android:gravity = "right"
+            android:inputType = "number" />
+        <Button
+            android:id = "@+id/fetch_ip"
+            android:layout_width = "wrap_content"
+            android:layout_height = "wrap_content"
+            android:text = "Fetch IP" />
+    </LinearLayout>
+    <LinearLayout
         android:layout_width = "fill_parent"
         android:layout_height = "wrap_content">
-        <TableRow
-            android:layout_width = "fill_parent"
-            android:layout_height = "wrap_content">
-            <TextView
-                android:layout_width = "wrap_content"
-                android:layout_height = "wrap_content"
-                android:layout_gravity = "center_vertical|right"
-                android:text = "Bluetooth Name:" />
-            <EditText
-                android:id = "@+id/bt_name"
-                android:layout_width = "wrap_content"
-                android:layout_height = "wrap_content"
-                android:inputType = "text" />
-        </TableRow>
-    </TableLayout>
-    <TableLayout
+        <TextView
+            android:layout_width = "wrap_content"
+            android:layout_height = "wrap_content"
+            android:layout_gravity = "center_vertical|right"
+            android:text = "Bluetooth Name:" />
+        <EditText
+            android:id = "@+id/bt_name"
+            android:layout_width = "wrap_content"
+            android:layout_height = "wrap_content"
+            android:inputType = "text" />
+    </LinearLayout>
+    <LinearLayout
         android:layout_width = "fill_parent"
         android:layout_height = "wrap_content">
-        <TableRow
-            android:layout_width = "fill_parent"
-            android:layout_height = "wrap_content">
-            <CheckBox
-                android:id = "@+id/check_data"
-                android:layout_width = "wrap_content"
-                android:layout_height = "wrap_content"
-                android:text = "Turn off cell data afterwards" />
-        </TableRow>
-        <TableRow
-            android:layout_width = "fill_parent"
-            android:layout_height = "wrap_content">
-            <CheckBox
-                android:id = "@+id/check_gps"
-                android:layout_width = "wrap_content"
-                android:layout_height = "wrap_content"
-                android:text = "Turn off GPS afterwards" />
-        </TableRow>
-        <TableRow
-            android:layout_width = "fill_parent"
-            android:layout_height = "wrap_content">
-            <CheckBox
-                android:id = "@+id/check_debug"
-                android:layout_width = "wrap_content"
-                android:layout_height = "wrap_content"
-                android:text = "Log Debug Info" />
-        </TableRow>
-        <TableRow
-            android:layout_width = "fill_parent"
-            android:layout_height = "wrap_content">
-            <CheckBox
-                android:id = "@+id/check_lock"
-                android:layout_width = "wrap_content"
-                android:layout_height = "wrap_content"
-                android:text = "Lock Screen" />
-        </TableRow>
-        <TableRow
-            android:layout_width = "fill_parent"
-            android:layout_height = "wrap_content">
-            <CheckBox
-                android:id = "@+id/check_noise"
-                android:layout_width = "wrap_content"
-                android:layout_height = "wrap_content"
-                android:text = "Make Noise" />
-        </TableRow>
-    </TableLayout>
+        <TextView
+            android:layout_width = "wrap_content"
+            android:layout_height = "wrap_content"
+            android:layout_gravity = "center_vertical|right"
+            android:text = "Keystore Password:" />
+        <EditText
+            android:id = "@+id/keystore_password"
+            android:layout_width = "wrap_content"
+            android:layout_height = "wrap_content"
+            android:inputType = "text" />
+    </LinearLayout>
+    <CheckBox
+        android:id = "@+id/check_data"
+        android:layout_width = "wrap_content"
+        android:layout_height = "wrap_content"
+        android:text = "Turn off cell data afterwards" />
+    <CheckBox
+        android:id = "@+id/check_gps"
+        android:layout_width = "wrap_content"
+        android:layout_height = "wrap_content"
+        android:text = "Turn off GPS afterwards" />
+    <CheckBox
+        android:id = "@+id/check_debug"
+        android:layout_width = "wrap_content"
+        android:layout_height = "wrap_content"
+        android:text = "Log Debug Info" />
+    <CheckBox
+        android:id = "@+id/check_lock"
+        android:layout_width = "wrap_content"
+        android:layout_height = "wrap_content"
+        android:text = "Lock Screen" />
+    <CheckBox
+        android:id = "@+id/check_noise"
+        android:layout_width = "wrap_content"
+        android:layout_height = "wrap_content"
+        android:text = "Make Noise" />
     <LinearLayout
         android:layout_width = "fill_parent"
         android:layout_height = "wrap_content"
