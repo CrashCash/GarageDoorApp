@@ -30,6 +30,7 @@ public class GarageDoorOpen extends Activity {
     int port;
     String password;
     ContentResolver cr;
+    Context ctx = this;
     boolean manageData;
     String command = "OPENCLOSE";
 
@@ -39,7 +40,7 @@ public class GarageDoorOpen extends Activity {
         setContentView(R.layout.app);
 
         Utilities.setupLogging(this, "app");
-        log("Open app started");
+        log("Action app started");
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -62,7 +63,7 @@ public class GarageDoorOpen extends Activity {
 
     @Override
     protected void onDestroy() {
-        if (manageData) {
+        if (manageData && isDataEnabled(cr)) {
             setDataEnabled(cr, false);
         }
         super.onDestroy();
@@ -72,7 +73,6 @@ public class GarageDoorOpen extends Activity {
         @Override
         protected Void doInBackground(Void... voids) {
             Socket sock;
-            Context ctx = getApplicationContext();
             SSLSocketFactory sslSocketFactory = Utilities.initSSL(ctx, password);
             while (true) {
                 try {
@@ -96,8 +96,7 @@ public class GarageDoorOpen extends Activity {
                     if (response.equals(command + " DONE")) {
                         // yay! we're done
                         log("OpenDoor response received");
-                        publishProgress(null);
-                        return null;
+                        break;
                     } else {
                         // boo!
                         log("invalid OpenDoor response: " + response);
@@ -108,12 +107,18 @@ public class GarageDoorOpen extends Activity {
                     logExcept("OpenDoor", e);
                     log("Network: " + isNetworkAvailable(ctx));
                     log("Data: " + isDataEnabled(cr));
+                    if (!isDataEnabled(cr) && manageData) {
+                        setDataEnabled(cr, true);
+                    }
                 }
                 // don't spam the living hell out of the logs
                 sleep(MILLISECONDS / 2);
             }
+            publishProgress();
+            return null;
         }
 
+        @Override
         protected void onProgressUpdate(String... values) {
             finish();
         }

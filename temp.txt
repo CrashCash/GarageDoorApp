@@ -1,4 +1,0 @@
-08-17 12:37:13.146 945-2873/? I/EventHub: Removing device Satechi Shutter Button due to epoll hang-up event.
-08-17 12:37:13.146 945-2873/? I/EventHub: Removed device: path=/dev/input/event7 name=Satechi Shutter Button id=16 fd=210 classes=0x80000003
-08-17 12:37:13.156 945-2873/? I/InputReader: Device removed: id=16, name='Satechi Shutter Button', sources=0x00000101
-08-17 12:37:13.157 945-2873/? I/EventHub: Removing device '/dev/input/event7' due to inotify event
