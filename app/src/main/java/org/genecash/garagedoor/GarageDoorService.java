@@ -66,6 +66,7 @@ public class GarageDoorService extends Service implements LocationListener {
     SSLSocketFactory sslSocketFactory;
     Socket sock = null;
     String password;
+    long lastPing = 0;
 
     // do we actually manage the cell data?
     boolean manageData;
@@ -534,11 +535,15 @@ public class GarageDoorService extends Service implements LocationListener {
     synchronized void ping() {
         log("ping");
         if (!stop && sock != null) {
-            try {
-                sock.getOutputStream().write(("PING\n").getBytes());
-            } catch (Exception e) {
-                logExcept("Ping", e);
-                OpenSocket();
+            long now = System.currentTimeMillis();
+            if (now - lastPing > 5 * MILLISECONDS) {
+                lastPing = now;
+                try {
+                    sock.getOutputStream().write(("PING\n").getBytes());
+                } catch (Exception e) {
+                    logExcept("Ping", e);
+                    OpenSocket();
+                }
             }
         }
     }
