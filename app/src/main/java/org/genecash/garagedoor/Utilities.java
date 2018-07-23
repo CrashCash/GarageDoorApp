@@ -23,7 +23,6 @@ import javax.net.ssl.TrustManagerFactory;
 public class Utilities {
     // our own logging system
     public static final Logger loggerSet = Logger.getLogger("logger");
-    static final int MILLISECONDS = 1000;
     static final String DEGREE = "°";
 
     // setting preferences

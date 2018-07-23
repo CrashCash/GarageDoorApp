@@ -26,6 +26,7 @@ import android.os.PowerManager.WakeLock;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -37,7 +38,6 @@ import java.util.Queue;
 
 import javax.net.ssl.SSLSocketFactory;
 
-import static org.genecash.garagedoor.Utilities.MILLISECONDS;
 import static org.genecash.garagedoor.Utilities.RESPONSE;
 import static org.genecash.garagedoor.Utilities.isDataEnabled;
 import static org.genecash.garagedoor.Utilities.isNetworkAvailable;
@@ -227,13 +227,13 @@ public class GarageDoorService extends Service implements LocationListener {
         log("initialize GPS");
         if (!Utilities.getGPSOn(getContentResolver())) {
             Utilities.setGPSOn(getContentResolver(), true);
-            sleep(2 * MILLISECONDS);
+            sleep(2 * DateUtils.SECOND_IN_MILLIS);
         }
 
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         setupGPS();
 
-        new Handler().postDelayed(new ShutDownApp(), 10 * Utilities.MILLISECONDS);
+        shutDownApp();
     }
 
     // we are using the old platform location API instead of the Google Location Services API from
@@ -277,7 +277,7 @@ public class GarageDoorService extends Service implements LocationListener {
                     public void run() {
                         stopSelf();
                     }
-                }, 5 * MILLISECONDS);
+                }, 5 * DateUtils.SECOND_IN_MILLIS);
                 return;
             }
         } else {
@@ -292,7 +292,7 @@ public class GarageDoorService extends Service implements LocationListener {
             }
             if (rate_low) {
                 notifyUpdate("switching to high rate", uriAlert);
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_hi * MILLISECONDS, 0, this);
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_hi * DateUtils.SECOND_IN_MILLIS, 0, this);
                 rate = "High";
                 rate_low = false;
             }
@@ -306,7 +306,7 @@ public class GarageDoorService extends Service implements LocationListener {
             }
             if (!rate_low) {
                 notifyUpdate("switching to low rate");
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_lo * MILLISECONDS, 0, this);
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_lo * DateUtils.SECOND_IN_MILLIS, 0, this);
                 rate = "Low";
                 rate_low = true;
             }
@@ -438,7 +438,7 @@ public class GarageDoorService extends Service implements LocationListener {
     void notifyWait() {
         while (player != null && player.isPlaying()) {
             log("sound_playing");
-            sleep(MILLISECONDS);
+            sleep(DateUtils.SECOND_IN_MILLIS);
         }
     }
 
@@ -450,7 +450,7 @@ public class GarageDoorService extends Service implements LocationListener {
         rate_low = false;
         command_sent = false;
         locationChanged = false;
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_hi * MILLISECONDS, 0, this);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_hi * DateUtils.SECOND_IN_MILLIS, 0, this);
         startGPS = System.currentTimeMillis();
         notifyUpdate("Waiting for GPS");
     }
@@ -465,7 +465,7 @@ public class GarageDoorService extends Service implements LocationListener {
             log("openSocket loop");
             try {
                 sock = sslSocketFactory.createSocket(hostname, port);
-                sock.setSoTimeout(10 * MILLISECONDS);
+                sock.setSoTimeout((int) (10 * DateUtils.SECOND_IN_MILLIS));
                 sock.setTcpNoDelay(true);
                 buffRdr = new BufferedReader(new InputStreamReader(sock.getInputStream(), "ASCII"));
                 response = buffRdr.readLine();
@@ -481,10 +481,10 @@ public class GarageDoorService extends Service implements LocationListener {
                 log("Data: " + isDataEnabled(cr));
                 if (!isDataEnabled(cr) && manageData) {
                     setDataEnabled(cr, true);
-                    sleep(15 * MILLISECONDS);
+                    sleep(15 * DateUtils.SECOND_IN_MILLIS);
                 }
                 // don't spam the living hell out of the logs
-                sleep(5 * MILLISECONDS);
+                sleep(5 * DateUtils.SECOND_IN_MILLIS);
             }
         }
         log("end openSocket");
@@ -527,7 +527,7 @@ public class GarageDoorService extends Service implements LocationListener {
                 logExcept("OpenDoor", e);
                 OpenSocket();
             }
-            sleep(2 * MILLISECONDS);
+            sleep(2 * DateUtils.SECOND_IN_MILLIS);
         }
         log("end OpenDoor");
     }
@@ -536,7 +536,7 @@ public class GarageDoorService extends Service implements LocationListener {
         log("ping");
         if (!stop && sock != null) {
             long now = System.currentTimeMillis();
-            if (now - lastPing > 5 * MILLISECONDS) {
+            if (now - lastPing > 5 * DateUtils.SECOND_IN_MILLIS) {
                 lastPing = now;
                 try {
                     sock.getOutputStream().write(("PING\n").getBytes());
@@ -549,23 +549,20 @@ public class GarageDoorService extends Service implements LocationListener {
     }
 
     // lock screen and shut down app
-    class ShutDownApp implements Runnable {
-        @Override
-        public void run() {
-            log("ShutDownApp");
+    void shutDownApp() {
+        log("ShutDownApp");
 
-            // wait for sound to finish, since locking the screen & app shutdown will interfere
-            notifyWait();
+        // wait for sound to finish, since locking the screen & app shutdown will interfere
+        notifyWait();
 
-            // lock screen
-            if (lockScreen) {
-                DevicePolicyManager devicePolicyManager = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
-                devicePolicyManager.lockNow();
-                log("screen locked");
-            }
-
-            // shut down app
-            sendBroadcast(new Intent(Utilities.ACTION_CLOSE));
+        // lock screen
+        if (lockScreen) {
+            DevicePolicyManager devicePolicyManager = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
+            devicePolicyManager.lockNow();
+            log("screen locked");
         }
+
+        // shut down app
+        sendBroadcast(new Intent(Utilities.ACTION_CLOSE));
     }
 }

@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 
@@ -96,7 +97,7 @@ public class BluetoothReceiver extends BroadcastReceiver {
                     }
 
                     // we can't just sleep
-                    new Handler().postDelayed(new RestoreBluetooth(), 1 * Utilities.MILLISECONDS);
+                    new Handler().postDelayed(new RestoreBluetooth(), 1 * DateUtils.SECOND_IN_MILLIS);
                 }
             }
         }
@@ -110,7 +111,7 @@ public class BluetoothReceiver extends BroadcastReceiver {
             Log.i("GarageDoor", "BT shutdown");
             BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
             adapter.disable();
-            Utilities.sleep(5 * Utilities.MILLISECONDS);
+            Utilities.sleep(5 * DateUtils.SECOND_IN_MILLIS);
             adapter.enable();
         }
     }
