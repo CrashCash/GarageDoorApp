@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.format.DateUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,7 +17,6 @@ import java.net.Socket;
 
 import javax.net.ssl.SSLSocketFactory;
 
-import static org.genecash.garagedoor.Utilities.MILLISECONDS;
 import static org.genecash.garagedoor.Utilities.RESPONSE;
 import static org.genecash.garagedoor.Utilities.isDataEnabled;
 import static org.genecash.garagedoor.Utilities.isNetworkAvailable;
@@ -112,7 +112,7 @@ public class GarageDoorOpen extends Activity {
                     }
                 }
                 // don't spam the living hell out of the logs
-                sleep(MILLISECONDS / 2);
+                sleep(DateUtils.SECOND_IN_MILLIS / 2);
             }
             publishProgress();
             return null;

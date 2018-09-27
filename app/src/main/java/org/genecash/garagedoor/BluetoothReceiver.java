@@ -13,6 +13,16 @@ import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 
+// To turn off the notification sound that happens when a physical keyboard connects, go to
+// Settings -> Apps & notifications -> App info
+// Menu -> Show system
+// Pick "Android System"
+// Pick "App notifications"
+// Scroll down to "Physical keyboard" and pick it
+// Pick "Sound"
+// Select "None"
+// Whew.
+
 public class BluetoothReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {

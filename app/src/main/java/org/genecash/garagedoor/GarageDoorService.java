@@ -3,6 +3,7 @@ package org.genecash.garagedoor;
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.Notification.Builder;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.app.admin.DevicePolicyManager;
@@ -12,11 +13,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.media.MediaPlayer;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,7 +28,6 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.widget.Toast;
@@ -56,9 +58,10 @@ public class GarageDoorService extends Service implements LocationListener {
     Builder notifyBuilder;
     Uri uriRingtone;
     Uri uriAlert;
-    MediaPlayer player;
+    MediaPlayer player = null;
     boolean sound;
     static final int NOTIFICATION_ID = 1;
+    long lastWhistle = 0;
 
     // network info
     String hostname;
@@ -130,6 +133,7 @@ public class GarageDoorService extends Service implements LocationListener {
     @Override
     public void onCreate() {
         Utilities.setupLogging(this, "service");
+        log("Service started");
 
         // no matter what, log all exceptions
         final Thread.UncaughtExceptionHandler oldHandler = Thread.getDefaultUncaughtExceptionHandler();
@@ -149,8 +153,8 @@ public class GarageDoorService extends Service implements LocationListener {
         });
 
         // custom sounds
-        uriRingtone = Settings.System.DEFAULT_NOTIFICATION_URI;
-        uriAlert = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.whistle);
+        uriRingtone = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        uriAlert = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + getPackageName() + "/" + R.raw.whistle);
 
         registerReceiver(broadcastReceiverStop, new IntentFilter(Utilities.ACTION_STOP));
         registerReceiver(broadcastReceiverToggle, new IntentFilter(Utilities.ACTION_TOGGLE));
@@ -211,13 +215,29 @@ public class GarageDoorService extends Service implements LocationListener {
 
         // start in foreground so we don't get killed
         notifyManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notifyBuilder = new Notification.Builder(this).setContentTitle("Garage Door Opener").setContentText("Initializing").setSmallIcon(
-                R.drawable.open_app).setOngoing(true).setStyle(new Notification.BigTextStyle());
+
+        // create notification channel for Oreo
+        String channelID = "GarageDoor";
+        NotificationChannel notificationChannel = new NotificationChannel(channelID, "Garage Door", NotificationManager.IMPORTANCE_HIGH);
+        notificationChannel.enableLights(true);
+        // turn off default sound
+        notificationChannel.setSound(null, null);
+        notificationChannel.setLightColor(Color.RED);
+        notifyManager.createNotificationChannel(notificationChannel);
+
+        notifyBuilder = new Notification.Builder(this)
+                .setContentTitle("Garage Door Opener")
+                .setContentText("Initializing")
+                .setSmallIcon(R.drawable.open_app)
+                .setOngoing(true)
+                .setStyle(new Notification.BigTextStyle())
+                .setChannelId(channelID)
+                .setSound(null);
         startForeground(NOTIFICATION_ID, notifyBuilder.build());
 
         // acquire full lock so GPS works (fuck that partial wake lock shit!)
         pm = (PowerManager) getSystemService(POWER_SERVICE);
-        cpuLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "GarageCPULock");
+        cpuLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "GarageDoorService: GarageCPULock");
         cpuLock.acquire();
 
         // initialize SSL
@@ -359,7 +379,11 @@ public class GarageDoorService extends Service implements LocationListener {
         if (extras != null) {
             if (extras.getBoolean(Utilities.NOISE_FLAG, true)) {
                 // play whistle sound
-                notifyUpdate("Started by Bluetooth button", uriAlert);
+                long now = System.currentTimeMillis();
+                if (now - lastWhistle > 5 * DateUtils.SECOND_IN_MILLIS) {
+                    lastWhistle = now;
+                    notifyUpdate("Started by Bluetooth button", uriAlert);
+                }
             }
         }
 
@@ -411,6 +435,7 @@ public class GarageDoorService extends Service implements LocationListener {
 
     // update notification
     void notifyUpdate(String msg, Uri audio) {
+        log("notifyUpdate: " + msg + " " + audio);
         notifyBuilder.setContentText(msg);
         notifyManager.notify(NOTIFICATION_ID, notifyBuilder.build());
         if (audio != null && sound) {
@@ -418,10 +443,16 @@ public class GarageDoorService extends Service implements LocationListener {
             notifyWait();
 
             // play sound
-            log("play sound");
-            player = MediaPlayer.create(this, audio);
-            player.setLooping(false);
-            player.start();
+            if (player != null) {
+                player.release();
+            }
+            try {
+                player = new MediaPlayer().create(this, audio);
+                player.setLooping(false);
+                player.start();
+            } catch (Exception e) {
+                logExcept("notifyUpdate", e);
+            }
         }
         log(msg);
     }

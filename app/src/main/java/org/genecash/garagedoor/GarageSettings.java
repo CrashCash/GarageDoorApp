@@ -12,6 +12,7 @@ import android.location.LocationProvider;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -32,17 +33,17 @@ import java.text.DecimalFormat;
 import static org.genecash.garagedoor.Utilities.log;
 
 public class GarageSettings extends Activity {
-    private Location location;
-    private LocationManager locationManager;
-    private LocationListener locationListener;
+    Location location;
+    LocationManager locationManager;
+    LocationListener locationListener;
 
     // display widgets
-    private EditText edIP, edPort, edBtName, edPassword, edLatitude, edLongitude, edRadiusOpen, edRadiusRate, edRateHi, edRateLo;
-    private CheckBox cbData, cbGPS, cbDebug, cbLock, cbNoise;
-    private Button bGPS;
+    EditText edIP, edPort, edBtName, edPassword, edLatitude, edLongitude, edRadiusOpen, edRadiusRate, edRateHi, edRateLo;
+    CheckBox cbData, cbGPS, cbDebug, cbLock, cbNoise;
+    Button bGPS;
 
-    private SharedPreferences prefs;
-    private GarageSettings ctx;
+    SharedPreferences prefs;
+    GarageSettings ctx;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,22 +70,22 @@ public class GarageSettings extends Activity {
             prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
             // find fields
-            edIP = (EditText) findViewById(R.id.ip);
-            edPort = (EditText) findViewById(R.id.port);
-            edBtName = (EditText) findViewById(R.id.bt_name);
-            edPassword = (EditText) findViewById(R.id.keystore_password);
-            edLatitude = (EditText) findViewById(R.id.latitude);
-            edLongitude = (EditText) findViewById(R.id.longitude);
-            edRadiusOpen = (EditText) findViewById(R.id.radius_open);
-            edRadiusRate = (EditText) findViewById(R.id.radius_rate);
-            edRateHi = (EditText) findViewById(R.id.rate_hi);
-            edRateLo = (EditText) findViewById(R.id.rate_lo);
-            cbData = (CheckBox) findViewById(R.id.check_data);
-            cbGPS = (CheckBox) findViewById(R.id.check_gps);
-            cbDebug = (CheckBox) findViewById(R.id.check_debug);
-            cbLock = (CheckBox) findViewById(R.id.check_lock);
-            cbNoise = (CheckBox) findViewById(R.id.check_noise);
-            bGPS = (Button) findViewById(R.id.mark);
+            edIP = findViewById(R.id.ip);
+            edPort = findViewById(R.id.port);
+            edBtName = findViewById(R.id.bt_name);
+            edPassword = findViewById(R.id.keystore_password);
+            edLatitude = findViewById(R.id.latitude);
+            edLongitude = findViewById(R.id.longitude);
+            edRadiusOpen = findViewById(R.id.radius_open);
+            edRadiusRate = findViewById(R.id.radius_rate);
+            edRateHi = findViewById(R.id.rate_hi);
+            edRateLo = findViewById(R.id.rate_lo);
+            cbData = findViewById(R.id.check_data);
+            cbGPS = findViewById(R.id.check_gps);
+            cbDebug = findViewById(R.id.check_debug);
+            cbLock = findViewById(R.id.check_lock);
+            cbNoise = findViewById(R.id.check_noise);
+            bGPS = findViewById(R.id.mark);
 
             // populate fields from current settings
             edIP.setText(prefs.getString(Utilities.PREFS_IP, "99.168.121.221"));
@@ -252,7 +253,7 @@ public class GarageSettings extends Activity {
             };
             locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
             try {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5 * Utilities.MILLISECONDS, 0, locationListener);
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5 * DateUtils.SECOND_IN_MILLIS, 0, locationListener);
             } catch (Exception e) {
                 String s = "Error getting location: " + e.getMessage();
                 Toast.makeText(this, s, Toast.LENGTH_LONG).show();
