@@ -3,11 +3,8 @@ package org.genecash.garagedoor;
 import android.Manifest;
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.Window;
@@ -17,17 +14,6 @@ import android.widget.Toast;
 import static org.genecash.garagedoor.Utilities.log;
 
 public class GarageDoorApp extends Activity {
-    // exit when the service tells us to
-    BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (Utilities.ACTION_CLOSE.equals(intent.getAction())) {
-                log("onReceive finish");
-                finish();
-            }
-        }
-    };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         boolean ok = true;
@@ -93,8 +79,6 @@ public class GarageDoorApp extends Activity {
 
         // we're finally good to go
         if (ok) {
-            registerReceiver(broadcastReceiver, new IntentFilter(Utilities.ACTION_CLOSE));
-
             // make noise?
             Intent i = getIntent();
             // this extra is only passed from the Bluetooth receiver
@@ -103,18 +87,15 @@ public class GarageDoorApp extends Activity {
             // start background service process
             Intent intent = new Intent(this, GarageDoorService.class);
             intent.putExtra(Utilities.NOISE_FLAG, noise);
-            startService(intent);
+            startForegroundService(intent);
         }
+        log("App finish");
+        finish();
     }
 
     @Override
     protected void onDestroy() {
-        try {
-            unregisterReceiver(broadcastReceiver);
-        } catch (Exception e) {
-            // there's no way to tell if a receiver has been registered...
-            // you have to just unregister it anyway and deal
-        }
+        log("App onDestroy");
         Utilities.stopLogging();
         super.onDestroy();
     }

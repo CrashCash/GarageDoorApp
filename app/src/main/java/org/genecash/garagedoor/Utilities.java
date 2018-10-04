@@ -46,7 +46,6 @@ public class Utilities {
 
     static final String NOISE_FLAG = "NOISE_FLAG";
 
-    static final String ACTION_CLOSE = "org.genecash.garagedoor.close";
     static final String ACTION_STOP = "org.genecash.garagedoor.stop";
     static final String ACTION_TOGGLE = "org.genecash.garagedoor.toggle";
 

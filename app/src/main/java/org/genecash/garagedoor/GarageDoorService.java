@@ -77,13 +77,15 @@ public class GarageDoorService extends Service implements LocationListener {
     // GPS information
     boolean manageGPS;
     Location destination;
-    String rate;
     int radius_open;
     int radius_rate;
     int interval_hi;
     int interval_lo;
     long startGPS;
-    boolean rate_low;
+    int RATE_START = 0;
+    int RATE_LOW = 0;
+    int RATE_HIGH = 0;
+    int rate = RATE_START;
     static boolean locationChanged = false;
     LocationManager locationManager;
 
@@ -152,6 +154,28 @@ public class GarageDoorService extends Service implements LocationListener {
             }
         });
 
+        notifyManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        // create notification channel for Oreo
+        // IF YOU CHANGE THIS, YOU HAVE TO DELETE & REINSTALL THE APP TO GET RID OF THE OLD ONE
+        String channelID = "GarageDoor";
+        NotificationChannel notificationChannel = new NotificationChannel(channelID, "Garage Door", NotificationManager.IMPORTANCE_HIGH);
+        notificationChannel.enableLights(true);
+        // turn off default sound
+        notificationChannel.setSound(null, null);
+        notificationChannel.setLightColor(Color.RED);
+        notifyManager.createNotificationChannel(notificationChannel);
+
+        notifyBuilder = new Notification.Builder(this, channelID)
+                .setContentTitle("Garage Door Opener")
+                .setContentText("Initializing")
+                .setSmallIcon(R.drawable.open_app)
+                .setOngoing(true)
+                .setStyle(new Notification.BigTextStyle());
+
+        // start in foreground so we don't get killed - must do this as soon as possible
+        startForeground(NOTIFICATION_ID, notifyBuilder.build());
+
         // custom sounds
         uriRingtone = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         uriAlert = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + getPackageName() + "/" + R.raw.whistle);
@@ -213,28 +237,6 @@ public class GarageDoorService extends Service implements LocationListener {
             setDataEnabled(getContentResolver(), true);
         }
 
-        // start in foreground so we don't get killed
-        notifyManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-        // create notification channel for Oreo
-        String channelID = "GarageDoor";
-        NotificationChannel notificationChannel = new NotificationChannel(channelID, "Garage Door", NotificationManager.IMPORTANCE_HIGH);
-        notificationChannel.enableLights(true);
-        // turn off default sound
-        notificationChannel.setSound(null, null);
-        notificationChannel.setLightColor(Color.RED);
-        notifyManager.createNotificationChannel(notificationChannel);
-
-        notifyBuilder = new Notification.Builder(this)
-                .setContentTitle("Garage Door Opener")
-                .setContentText("Initializing")
-                .setSmallIcon(R.drawable.open_app)
-                .setOngoing(true)
-                .setStyle(new Notification.BigTextStyle())
-                .setChannelId(channelID)
-                .setSound(null);
-        startForeground(NOTIFICATION_ID, notifyBuilder.build());
-
         // acquire full lock so GPS works (fuck that partial wake lock shit!)
         pm = (PowerManager) getSystemService(POWER_SERVICE);
         cpuLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "GarageDoorService: GarageCPULock");
@@ -253,7 +255,15 @@ public class GarageDoorService extends Service implements LocationListener {
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         setupGPS();
 
-        shutDownApp();
+        // wait for sound to finish, since locking the screen will interfere
+        notifyWait();
+
+        // lock screen
+        if (lockScreen) {
+            DevicePolicyManager devicePolicyManager = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
+            devicePolicyManager.lockNow();
+            log("screen locked");
+        }
     }
 
     // we are using the old platform location API instead of the Google Location Services API from
@@ -286,7 +296,7 @@ public class GarageDoorService extends Service implements LocationListener {
         if (distance < radius_open) {
             if (!command_sent) {
                 // tell the Raspberry Pi to open the door
-                notifyUpdate("Opening door", uriRingtone);
+                notifyUpdate("Opening door", uriAlert);
                 openDoor();
                 stop = true;
                 log("exiting due to trip complete");
@@ -310,11 +320,12 @@ public class GarageDoorService extends Service implements LocationListener {
             if (sock == null) {
                 OpenSocket();
             }
-            if (rate_low) {
-                notifyUpdate("switching to high rate", uriAlert);
+            if (rate != RATE_HIGH) {
+                if (rate != RATE_START) {
+                    notifyUpdate("switching to high rate", uriAlert);
+                }
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_hi * DateUtils.SECOND_IN_MILLIS, 0, this);
-                rate = "High";
-                rate_low = false;
+                rate = RATE_HIGH;
             }
 
             // keep connection alive
@@ -324,11 +335,12 @@ public class GarageDoorService extends Service implements LocationListener {
             if (sock != null) {
                 closeSocket();
             }
-            if (!rate_low) {
-                notifyUpdate("switching to low rate");
+            if (rate != RATE_LOW) {
+                if (rate != RATE_START) {
+                    notifyUpdate("switching to low rate", uriAlert);
+                }
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_lo * DateUtils.SECOND_IN_MILLIS, 0, this);
-                rate = "Low";
-                rate_low = true;
+                rate = RATE_LOW;
             }
         }
     }
@@ -413,6 +425,7 @@ public class GarageDoorService extends Service implements LocationListener {
             setDataEnabled(getContentResolver(), false);
         }
 
+        // unregister all broadcast receivers
         unregisterReceiver(broadcastReceiverStop);
         unregisterReceiver(broadcastReceiverToggle);
 
@@ -420,6 +433,12 @@ public class GarageDoorService extends Service implements LocationListener {
         if (notifyManager != null) {
             notifyManager.cancelAll();
         }
+
+        // release media player
+        if (player != null) {
+            player.release();
+        }
+
         Utilities.stopLogging();
 
         if (cpuLock != null) {
@@ -476,9 +495,7 @@ public class GarageDoorService extends Service implements LocationListener {
     // request location updates from GPS
     void setupGPS() {
         log("setupGPS");
-        // use high rate so we don't get a notification sound if we're already within the rate radius at start
-        rate = "High";
-        rate_low = false;
+        rate = RATE_START;
         command_sent = false;
         locationChanged = false;
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_hi * DateUtils.SECOND_IN_MILLIS, 0, this);
@@ -577,23 +594,5 @@ public class GarageDoorService extends Service implements LocationListener {
                 }
             }
         }
-    }
-
-    // lock screen and shut down app
-    void shutDownApp() {
-        log("ShutDownApp");
-
-        // wait for sound to finish, since locking the screen & app shutdown will interfere
-        notifyWait();
-
-        // lock screen
-        if (lockScreen) {
-            DevicePolicyManager devicePolicyManager = (DevicePolicyManager) getSystemService(DEVICE_POLICY_SERVICE);
-            devicePolicyManager.lockNow();
-            log("screen locked");
-        }
-
-        // shut down app
-        sendBroadcast(new Intent(Utilities.ACTION_CLOSE));
     }
 }
