@@ -7,7 +7,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -53,13 +52,13 @@ public class BluetoothReceiver extends BroadcastReceiver {
                     Log.i("GarageDoor", "bluetooth key media play/pause");
                     break;
             }
-            if (event.isAltPressed()){
+            if (event.isAltPressed()) {
                 Log.i("GarageDoor", "bluetooth key alt pressed");
             }
-            if (event.isShiftPressed()){
+            if (event.isShiftPressed()) {
                 Log.i("GarageDoor", "bluetooth key shift pressed");
             }
-            if (event.isCtrlPressed()){
+            if (event.isCtrlPressed()) {
                 Log.i("GarageDoor", "bluetooth key ctrl pressed");
             }
             return;
@@ -106,8 +105,11 @@ public class BluetoothReceiver extends BroadcastReceiver {
                         context.startActivity(app);
                     }
 
+                    // this is no longer necessary in Oreo!
+                    // just go to the Bluetooth setting for the paired button, and uncheck all the "Use for" profiles and Oreo will
+                    // automatically disconnect it!
                     // we can't just sleep
-                    new Handler().postDelayed(new RestoreBluetooth(), 1 * DateUtils.SECOND_IN_MILLIS);
+                    // new Handler().postDelayed(new RestoreBluetooth(), 1 * DateUtils.SECOND_IN_MILLIS);
                 }
             }
         }
