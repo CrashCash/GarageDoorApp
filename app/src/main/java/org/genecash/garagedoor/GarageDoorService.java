@@ -45,7 +45,9 @@ import static org.genecash.garagedoor.Utilities.isDataEnabled;
 import static org.genecash.garagedoor.Utilities.isNetworkAvailable;
 import static org.genecash.garagedoor.Utilities.log;
 import static org.genecash.garagedoor.Utilities.setDataEnabled;
+import static org.genecash.garagedoor.Utilities.setupLogging;
 import static org.genecash.garagedoor.Utilities.sleep;
+import static org.genecash.garagedoor.Utilities.stopLogging;
 
 @SuppressLint("MissingPermission")
 public class GarageDoorService extends Service implements LocationListener {
@@ -132,9 +134,10 @@ public class GarageDoorService extends Service implements LocationListener {
         }
     };
 
+    @SuppressLint("DefaultLocale")
     @Override
     public void onCreate() {
-        Utilities.setupLogging(this, "service");
+        setupLogging(this, "service");
         log("Service started");
 
         // no matter what, log all exceptions
@@ -227,10 +230,15 @@ public class GarageDoorService extends Service implements LocationListener {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitNetwork().build();
         StrictMode.setThreadPolicy(policy);
 
-        log("\n----------------------------------------------------------------");
-        log(String.format("host/port: %s/%d\n" + "dest: %.4f,%.4f\n" + "rate radius: %d\n" + "open radius: % d\n" + "hi rate: %d\n" +
-                          "lo rate: %d\n" + "manage data: %s\n" + "manage GPS: %s\n", hostname, port, latitude, longitude, radius_rate,
-                          radius_open, interval_hi, interval_lo, manageData, manageGPS));
+        log("----------------------------------------------------------------");
+        log(String.format("host/port: %s/%d", hostname, port));
+        log(String.format("dest: %.4f,%.4f", latitude, longitude));
+        log(String.format("rate radius: %d", radius_rate));
+        log(String.format("open radius: % d", radius_open));
+        log(String.format("hi rate: %d", interval_hi));
+        log(String.format("lo rate: %d", interval_lo));
+        log(String.format("manage data: %s", manageData));
+        log(String.format("manage GPS: %s", manageGPS));
 
         // turn on cell data
         if (manageData) {
@@ -439,7 +447,7 @@ public class GarageDoorService extends Service implements LocationListener {
             player.release();
         }
 
-        Utilities.stopLogging();
+        stopLogging();
 
         if (cpuLock != null) {
             cpuLock.release();

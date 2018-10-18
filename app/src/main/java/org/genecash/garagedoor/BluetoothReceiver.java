@@ -9,8 +9,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.text.format.DateUtils;
-import android.util.Log;
 import android.view.KeyEvent;
+
+import static org.genecash.garagedoor.Utilities.log;
+import static org.genecash.garagedoor.Utilities.setupLogging;
+import static org.genecash.garagedoor.Utilities.sleep;
+import static org.genecash.garagedoor.Utilities.stopLogging;
 
 // To turn off the notification sound that happens when a physical keyboard connects, go to
 // Settings -> Apps & notifications -> App info
@@ -25,41 +29,42 @@ import android.view.KeyEvent;
 public class BluetoothReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
+        setupLogging(context, "bluetooth");
         String action = intent.getAction();
-        Log.i("GarageDoor", "bluetooth intent: " + intent);
+        log("bluetooth intent: " + intent);
 
         if (action == Intent.ACTION_MEDIA_BUTTON) {
             KeyEvent event = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
-            Log.i("GarageDoor", "bluetooth key event: " + event);
+            log("bluetooth key event: " + event);
             int keyAction = event.getAction();
             String keyString = event.getCharacters();
-            Log.i("GarageDoor", "bluetooth keys: " + keyString);
+            log("bluetooth keys: " + keyString);
             if (keyAction == KeyEvent.ACTION_DOWN) {
-                Log.i("GarageDoor", "bluetooth key press");
+                log("bluetooth key press");
             }
             if (keyAction == KeyEvent.ACTION_UP) {
-                Log.i("GarageDoor", "bluetooth key release");
+                log("bluetooth key release");
             }
             int keyCode = event.getKeyCode();
             switch (keyCode) {
                 case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
-                    Log.i("GarageDoor", "bluetooth key media prev");
+                    log("bluetooth key media prev");
                     break;
                 case KeyEvent.KEYCODE_MEDIA_NEXT:
-                    Log.i("GarageDoor", "bluetooth key media next");
+                    log("bluetooth key media next");
                     break;
                 case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
-                    Log.i("GarageDoor", "bluetooth key media play/pause");
+                    log("bluetooth key media play/pause");
                     break;
             }
             if (event.isAltPressed()) {
-                Log.i("GarageDoor", "bluetooth key alt pressed");
+                log("bluetooth key alt pressed");
             }
             if (event.isShiftPressed()) {
-                Log.i("GarageDoor", "bluetooth key shift pressed");
+                log("bluetooth key shift pressed");
             }
             if (event.isCtrlPressed()) {
-                Log.i("GarageDoor", "bluetooth key ctrl pressed");
+                log("bluetooth key ctrl pressed");
             }
             return;
         }
@@ -71,10 +76,10 @@ public class BluetoothReceiver extends BroadcastReceiver {
             }
             String deviceName = device.getName();
             String address = device.getAddress();
-            Log.i("GarageDoor", "bluetooth address: " + address);
+            log("bluetooth address: " + address);
 
             if (deviceName != null) {
-                Log.i("GarageDoor", "bluetooth name: " + deviceName);
+                log("bluetooth name: " + deviceName);
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
                 String btName = prefs.getString(Utilities.PREFS_BT_NAME, "");
 
@@ -90,29 +95,39 @@ public class BluetoothReceiver extends BroadcastReceiver {
 
                     if (running) {
                         // service is running, just make noise
-                        Log.i("GarageDoor", "starting service from bluetooth button");
+                        log("starting service from bluetooth button");
                         Intent service = new Intent(context, GarageDoorService.class);
                         service.putExtra(Utilities.NOISE_FLAG, true);
-                        context.startService(service);
+                        context.startForegroundService(service);
                     } else {
+                        /*
                         // start up app so it can rouse the device and lock the screen
-                        Log.i("GarageDoor", "starting app from bluetooth button");
+                        log( "starting app from bluetooth button");
                         Intent app = new Intent(context, GarageDoorApp.class);
                         app.setAction(Intent.ACTION_MAIN);
                         app.putExtra(Utilities.NOISE_FLAG, true);
                         app.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         app.addCategory(Intent.CATEGORY_LAUNCHER);
                         context.startActivity(app);
+                        */
+
+                        // start background service process
+                        log("starting service from bluetooth button");
+                        Intent service = new Intent(context, GarageDoorService.class);
+                        service.putExtra(Utilities.NOISE_FLAG, true);
+                        context.startForegroundService(service);
                     }
 
                     // this is no longer necessary in Oreo!
                     // just go to the Bluetooth setting for the paired button, and uncheck all the "Use for" profiles and Oreo will
                     // automatically disconnect it!
+                    //
                     // we can't just sleep
                     // new Handler().postDelayed(new RestoreBluetooth(), 1 * DateUtils.SECOND_IN_MILLIS);
                 }
             }
         }
+        stopLogging();
     }
 
     // disconnect button so we can use it again
@@ -120,10 +135,10 @@ public class BluetoothReceiver extends BroadcastReceiver {
     class RestoreBluetooth implements Runnable {
         @Override
         public void run() {
-            Log.i("GarageDoor", "BT shutdown");
+            log("BT shutdown");
             BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
             adapter.disable();
-            Utilities.sleep(5 * DateUtils.SECOND_IN_MILLIS);
+            sleep(5 * DateUtils.SECOND_IN_MILLIS);
             adapter.enable();
         }
     }

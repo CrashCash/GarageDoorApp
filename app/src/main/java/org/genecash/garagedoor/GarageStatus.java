@@ -22,26 +22,27 @@ import java.util.Arrays;
 import javax.net.ssl.SSLSocketFactory;
 
 import static org.genecash.garagedoor.Utilities.log;
+import static org.genecash.garagedoor.Utilities.setupLogging;
+import static org.genecash.garagedoor.Utilities.stopLogging;
 
 public class GarageStatus extends Activity {
-    // our own logfile
-    private GarageStatus ctx = this;
-    private GetStatus taskStatus;
-    private ImageButton btn_roll, btn_door, btn_armed, btn_beam;
-    private String hostname;
-    private InetAddress host;
-    private int port;
-    private SSLSocketFactory sslSocketFactory;
-    private String password;
-    private Socket sockStatus = null;
-    private Socket sockCommand = null;
+    GarageStatus ctx = this;
+    GetStatus taskStatus;
+    ImageButton btn_roll, btn_door, btn_armed, btn_beam;
+    String hostname;
+    InetAddress host;
+    int port;
+    SSLSocketFactory sslSocketFactory;
+    String password;
+    Socket sockStatus = null;
+    Socket sockCommand = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.status);
 
-        Utilities.setupLogging(this, "status");
+        setupLogging(this, "status");
 
         // pull external address & port from preferences
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -126,7 +127,7 @@ public class GarageStatus extends Activity {
     @Override
     public void onDestroy() {
         log("onDestroy");
-        Utilities.stopLogging();
+        stopLogging();
         super.onDestroy();
     }
 

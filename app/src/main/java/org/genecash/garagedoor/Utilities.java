@@ -158,7 +158,6 @@ public class Utilities {
             Handler h = new FileHandler(ctx.getExternalFilesDir(null) + "/" + fn + "%g.txt", 256 * 1024, 100, true);
             h.setFormatter(new CustomLogFormatter());
             loggerSet.addHandler(h);
-            loggerSet.setUseParentHandlers(false);
         } catch (Exception e) {
             String msg = "Unable to initialize logging\n" + Log.getStackTraceString(e);
             Toast.makeText(ctx, msg, Toast.LENGTH_LONG).show();
@@ -168,16 +167,21 @@ public class Utilities {
 
     // log to our own file so that messages don't get lost
     static void log(String msg) {
-        Log.i("garagedoor", msg);
         loggerSet.info(msg);
+    }
+
+    // split lines so every one gets a timestamp and is sortable
+    static void logLines(String msg) {
+        for (String line : msg.split("\\R+")) {
+            loggerSet.info(line);
+        }
     }
 
     // log exceptions so everyone sees them
     static void logExcept(String fcn, Exception e) {
-        String msg = Log.getStackTraceString(e);
         String fcn2 = e.getStackTrace()[0].getMethodName();
-        Log.i("garagedoor", fcn, e);
-        loggerSet.info(fcn + "(" + fcn2 + ") exception:" + msg);
+        loggerSet.info(fcn + "(" + fcn2 + ") exception:");
+        logLines(Log.getStackTraceString(e));
     }
 
     // close logging file handlers to get rid of "lck" turdlets

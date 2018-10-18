@@ -10,5 +10,6 @@ package org.genecash.garagedoor;
 public class GarageDoorButton extends GarageDoorOpen {
     public GarageDoorButton() {
         command = "TOGGLE";
+        logname = "button";
     }
 }

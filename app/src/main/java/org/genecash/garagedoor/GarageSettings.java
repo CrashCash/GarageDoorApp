@@ -50,9 +50,9 @@ public class GarageSettings extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.settings);
         ctx = this;
-        Utilities.setupLogging(this, "prefs");
+        Utilities.setupLogging(this, "settings");
 
-        log("\n----------------------------------------------------------------");
+        log("----------------------------------------------------------------");
 
         // get permissions
         String[] permissions = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_PHONE_STATE,

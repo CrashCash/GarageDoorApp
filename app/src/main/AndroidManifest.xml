@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android = "http://schemas.android.com/apk/res/android"
+          xmlns:tools = "http://schemas.android.com/tools"
           package = "org.genecash.garagedoor"
-          android:versionCode = "1538682653"
-          android:versionName = "04-OCT-2018 03:50:53 PM">
+          android:versionCode = "1539859707"
+          android:versionName = "18-OCT-2018 06:48:27 AM">
 
     <uses-permission android:name = "android.permission.INTERNET" />
     <uses-permission android:name = "android.permission.ACCESS_NETWORK_STATE" />
@@ -19,12 +20,14 @@
     <uses-feature android:name = "android.hardware.location.gps" />
     <application
         android:icon = "@drawable/main_app"
-        android:label = "Garage Door">
+        android:label = "Garage Door"
+        tools:ignore = "GoogleAppIndexingWarning">
         <activity
             android:name = ".GarageDoorApp"
             android:icon = "@drawable/main_app"
             android:label = "Garage Door"
-            android:launchMode = "singleTop">
+            android:launchMode = "singleTop"
+            android:theme = "@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name = "android.intent.action.MAIN" />
                 <category android:name = "android.intent.category.LAUNCHER" />

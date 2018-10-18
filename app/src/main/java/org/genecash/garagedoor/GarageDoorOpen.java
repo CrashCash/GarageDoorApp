@@ -23,7 +23,9 @@ import static org.genecash.garagedoor.Utilities.isNetworkAvailable;
 import static org.genecash.garagedoor.Utilities.log;
 import static org.genecash.garagedoor.Utilities.logExcept;
 import static org.genecash.garagedoor.Utilities.setDataEnabled;
+import static org.genecash.garagedoor.Utilities.setupLogging;
 import static org.genecash.garagedoor.Utilities.sleep;
+import static org.genecash.garagedoor.Utilities.stopLogging;
 
 public class GarageDoorOpen extends Activity {
     String hostname;
@@ -33,13 +35,14 @@ public class GarageDoorOpen extends Activity {
     Context ctx = this;
     boolean manageData;
     String command = "OPENCLOSE";
+    String logname = "arm";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app);
 
-        Utilities.setupLogging(this, "app");
+        setupLogging(this, logname);
         log("Action app started");
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -66,6 +69,7 @@ public class GarageDoorOpen extends Activity {
         if (manageData && isDataEnabled(cr)) {
             setDataEnabled(cr, false);
         }
+        stopLogging();
         super.onDestroy();
     }
 
