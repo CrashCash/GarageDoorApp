@@ -52,7 +52,8 @@ import static org.genecash.garagedoor.Utilities.stopLogging;
 @SuppressLint("MissingPermission")
 public class GarageDoorService extends Service implements LocationListener {
     // locks
-    WakeLock cpuLock;
+    WakeLock cpuLockFull;
+    WakeLock cpuLockPartial;
     PowerManager pm;
 
     // notifications
@@ -247,8 +248,10 @@ public class GarageDoorService extends Service implements LocationListener {
 
         // acquire full lock so GPS works (fuck that partial wake lock shit!)
         pm = (PowerManager) getSystemService(POWER_SERVICE);
-        cpuLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "GarageDoorService: GarageCPULock");
-        cpuLock.acquire();
+        cpuLockFull = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "GarageDoorService: GarageCPULock");
+        cpuLockPartial = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "GarageDoorService: GarageCPULock");
+        cpuLockFull.acquire();
+        cpuLockPartial.acquire();
 
         // initialize SSL
         sslSocketFactory = Utilities.initSSL(this, password);
@@ -449,9 +452,14 @@ public class GarageDoorService extends Service implements LocationListener {
 
         stopLogging();
 
-        if (cpuLock != null) {
-            cpuLock.release();
+        if (cpuLockFull != null) {
+            cpuLockFull.release();
         }
+
+        if (cpuLockPartial != null) {
+            cpuLockPartial.release();
+        }
+
         super.onDestroy();
     }
 
