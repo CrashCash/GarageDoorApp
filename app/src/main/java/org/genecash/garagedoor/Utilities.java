@@ -153,7 +153,7 @@ public class Utilities {
     }
 
     // go through the pain of setting up our own logging
-    static void setupLogging(final Context ctx, String fn) {
+    static void setupLogging(Context ctx, String fn) {
         try {
             Handler h = new FileHandler(ctx.getExternalFilesDir(null) + "/" + fn + "%g.txt", 256 * 1024, 100, true);
             h.setFormatter(new CustomLogFormatter());
@@ -164,7 +164,6 @@ public class Utilities {
             Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
                 @Override
                 public void uncaughtException(Thread paramThread, Throwable ex) {
-                    Toast.makeText(ctx, "Uncaught exception: " + ex.getMessage(), Toast.LENGTH_LONG).show();
                     for (String line : Log.getStackTraceString(ex).split("\\R+")) {
                         loggerSet.info(line);
                     }
