@@ -1,6 +1,5 @@
 package org.genecash.garagedoor;
 
-import android.app.ActivityManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -83,40 +82,12 @@ public class BluetoothReceiver extends BroadcastReceiver {
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
                 String btName = prefs.getString(Utilities.PREFS_BT_NAME, "");
 
-                // determine if service is already running
-                boolean running = false;
                 if (deviceName.equals(btName)) {
-                    ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-                    for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-                        if (GarageDoorService.class.getName().equals(service.service.getClassName())) {
-                            running = true;
-                        }
-                    }
-
-                    if (running) {
-                        // service is running, just make noise
-                        log("starting service from bluetooth button");
-                        Intent service = new Intent(context, GarageDoorService.class);
-                        service.putExtra(Utilities.NOISE_FLAG, true);
-                        context.startForegroundService(service);
-                    } else {
-                        /*
-                        // start up app so it can rouse the device and lock the screen
-                        log( "starting app from bluetooth button");
-                        Intent app = new Intent(context, GarageDoorApp.class);
-                        app.setAction(Intent.ACTION_MAIN);
-                        app.putExtra(Utilities.NOISE_FLAG, true);
-                        app.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        app.addCategory(Intent.CATEGORY_LAUNCHER);
-                        context.startActivity(app);
-                        */
-
-                        // start background service process
-                        log("starting service from bluetooth button");
-                        Intent service = new Intent(context, GarageDoorService.class);
-                        service.putExtra(Utilities.NOISE_FLAG, true);
-                        context.startForegroundService(service);
-                    }
+                    // start background service process
+                    log("starting service from bluetooth button");
+                    Intent service = new Intent(context, GarageDoorService.class);
+                    service.putExtra(Utilities.NOISE_FLAG, true);
+                    context.startForegroundService(service);
 
                     // this is no longer necessary in Oreo!
                     // just go to the Bluetooth setting for the paired button, and uncheck all the "Use for" profiles and Oreo will

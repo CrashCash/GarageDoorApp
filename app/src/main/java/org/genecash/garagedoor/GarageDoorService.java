@@ -29,7 +29,6 @@ import android.os.PowerManager.WakeLock;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.text.format.DateUtils;
-import android.util.Log;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -139,24 +138,6 @@ public class GarageDoorService extends Service implements LocationListener {
     @Override
     public void onCreate() {
         setupLogging(this, "service");
-        log("Service started");
-
-        // no matter what, log all exceptions
-        final Thread.UncaughtExceptionHandler oldHandler = Thread.getDefaultUncaughtExceptionHandler();
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(Thread paramThread, Throwable paramThrowable) {
-                log("onCreate uncaughtException: " + Log.getStackTraceString(paramThrowable));
-
-                if (oldHandler != null) {
-                    // delegates to Android's error handling
-                    oldHandler.uncaughtException(paramThread, paramThrowable);
-                } else {
-                    // prevents the service/app from freezing
-                    System.exit(2);
-                }
-            }
-        });
 
         notifyManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
@@ -257,7 +238,6 @@ public class GarageDoorService extends Service implements LocationListener {
         sslSocketFactory = Utilities.initSSL(this, password);
 
         // turn on GPS
-        log("initialize GPS");
         if (!Utilities.getGPSOn(getContentResolver())) {
             Utilities.setGPSOn(getContentResolver(), true);
             sleep(2 * DateUtils.SECOND_IN_MILLIS);
@@ -282,7 +262,6 @@ public class GarageDoorService extends Service implements LocationListener {
     // http://developer.android.com/guide/topics/location/strategies.html
     @Override
     public void onLocationChanged(Location location) {
-        log("onLocationChanged");
         if (stop) {
             return;
         }
@@ -392,7 +371,6 @@ public class GarageDoorService extends Service implements LocationListener {
     // called every time we're started
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        log("onStartCommand");
         // lying sacks of shit don't always pass extras, or even an intent, as required by the documentation
         Bundle extras = null;
         if (intent != null) {
@@ -416,7 +394,6 @@ public class GarageDoorService extends Service implements LocationListener {
     // shut down gracefully
     @Override
     public void onDestroy() {
-        log("onDestroy");
         toast("Garage Door application exiting");
 
         if (sock != null) {
@@ -510,7 +487,6 @@ public class GarageDoorService extends Service implements LocationListener {
 
     // request location updates from GPS
     void setupGPS() {
-        log("setupGPS");
         rate = RATE_START;
         command_sent = false;
         locationChanged = false;
@@ -521,12 +497,10 @@ public class GarageDoorService extends Service implements LocationListener {
 
     // open SSL socket with standardized options and do initial handshake
     synchronized void OpenSocket() {
-        log("openSocket");
         BufferedReader buffRdr;
         String response;
 
         while (!stop) {
-            log("openSocket loop");
             try {
                 sock = sslSocketFactory.createSocket(hostname, port);
                 sock.setSoTimeout((int) (10 * DateUtils.SECOND_IN_MILLIS));
@@ -551,11 +525,9 @@ public class GarageDoorService extends Service implements LocationListener {
                 sleep(5 * DateUtils.SECOND_IN_MILLIS);
             }
         }
-        log("end openSocket");
     }
 
     synchronized void closeSocket() {
-        log("closeSocket");
         try {
             sock.close();
         } catch (Exception e) {
@@ -565,7 +537,6 @@ public class GarageDoorService extends Service implements LocationListener {
 
     // bang out the command to open the door
     synchronized void openDoor() {
-        log("OpenDoor");
         BufferedReader buffRdr;
         String response;
 
@@ -593,7 +564,6 @@ public class GarageDoorService extends Service implements LocationListener {
             }
             sleep(2 * DateUtils.SECOND_IN_MILLIS);
         }
-        log("end OpenDoor");
     }
 
     synchronized void ping() {

@@ -22,7 +22,6 @@ public class GarageDoorApp extends Activity {
 
         super.onCreate(savedInstanceState);
         setupLogging(this, "app");
-        log("App started");
 
         // turn screen on so the GPS wakes up
         Window window = this.getWindow();
@@ -85,7 +84,6 @@ public class GarageDoorApp extends Activity {
 
         // we're finally good to go
         if (ok) {
-            log("Starting service");
             Intent i = getIntent();
             // this extra is only passed from the Bluetooth receiver
             boolean noise = i.getBooleanExtra(Utilities.NOISE_FLAG, false);
@@ -96,20 +94,12 @@ public class GarageDoorApp extends Activity {
             startForegroundService(intent);
         }
 
-        log("App finish");
         finish();
     }
 
     @Override
     protected void onDestroy() {
-        log("App onDestroy");
         stopLogging();
         super.onDestroy();
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        //super.onNewIntent(intent);
-        log("onNewIntent");
     }
 }

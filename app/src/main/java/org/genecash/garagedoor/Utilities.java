@@ -136,13 +136,11 @@ public class Utilities {
 
     // is mobile data enabled?
     static boolean isDataEnabled(ContentResolver cr) {
-        log("isDataEnabled");
         return Settings.Global.getInt(cr, "mobile_data", 0) == 1;
     }
 
     // execute a superuser command
     static boolean executeCommandViaSu(String option, String command) {
-        log("executeCommandViaSu");
         try {
             Process process = Runtime.getRuntime().exec(new String[]{"su", option, command});
             return process.waitFor() == 0;

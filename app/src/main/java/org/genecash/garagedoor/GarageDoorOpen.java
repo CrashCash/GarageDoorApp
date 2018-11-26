@@ -43,7 +43,6 @@ public class GarageDoorOpen extends Activity {
         setContentView(R.layout.app);
 
         setupLogging(this, logname);
-        log("Action app started");
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -99,7 +98,6 @@ public class GarageDoorOpen extends Activity {
                     response = buffRdr.readLine();
                     if (response.equals(command + " DONE")) {
                         // yay! we're done
-                        log("OpenDoor response received");
                         break;
                     } else {
                         // boo!
