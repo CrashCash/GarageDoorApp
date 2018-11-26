@@ -463,9 +463,9 @@ public class GarageDoorService extends Service implements LocationListener {
         super.onDestroy();
     }
 
-    void logExcept(String fcn, Exception e) {
-        Utilities.logExcept(fcn, e);
-        notifyUpdate(fcn + " exception\n" + e.getMessage());
+    void logExcept(Exception e) {
+        Utilities.logExcept(e);
+        notifyUpdate("exception\n" + e.getMessage());
     }
 
     // update notification
@@ -486,7 +486,7 @@ public class GarageDoorService extends Service implements LocationListener {
                 player.setLooping(false);
                 player.start();
             } catch (Exception e) {
-                logExcept("notifyUpdate", e);
+                Utilities.logExcept(e);
             }
         }
         log(msg);
@@ -540,7 +540,7 @@ public class GarageDoorService extends Service implements LocationListener {
             } catch (Exception e) {
                 // sometimes we get a loop of ENETUNREACH (Network is unreachable) even though isDataEnabled() is true
                 ContentResolver cr = getContentResolver();
-                logExcept("OpenSocket", e);
+                logExcept(e);
                 log("Network: " + isNetworkAvailable(this));
                 log("Data: " + isDataEnabled(cr));
                 if (!isDataEnabled(cr) && manageData) {
@@ -588,7 +588,7 @@ public class GarageDoorService extends Service implements LocationListener {
                     log("invalid OpenDoor response: " + response);
                 }
             } catch (Exception e) {
-                logExcept("OpenDoor", e);
+                logExcept(e);
                 OpenSocket();
             }
             sleep(2 * DateUtils.SECOND_IN_MILLIS);
@@ -605,7 +605,7 @@ public class GarageDoorService extends Service implements LocationListener {
                 try {
                     sock.getOutputStream().write(("PING\n").getBytes());
                 } catch (Exception e) {
-                    logExcept("Ping", e);
+                    logExcept(e);
                     OpenSocket();
                 }
             }

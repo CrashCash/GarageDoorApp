@@ -61,7 +61,7 @@ public class GarageStatus extends Activity {
         log(String.format("host/port: %s/%d", hostname, port));
 
         // button to open/close garage door & show current state
-        btn_roll = (ImageButton) findViewById(R.id.status_roll);
+        btn_roll = findViewById(R.id.status_roll);
         btn_roll.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // this is how we have more than one AsyncTask running at a time
@@ -70,7 +70,7 @@ public class GarageStatus extends Activity {
         });
 
         // button to disarm door
-        btn_armed = (ImageButton) findViewById(R.id.status_armed);
+        btn_armed = findViewById(R.id.status_armed);
         btn_armed.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -79,15 +79,13 @@ public class GarageStatus extends Activity {
         });
 
         // button to show current state of back door
-        btn_door = (ImageButton) findViewById(R.id.status_door);
+        btn_door = findViewById(R.id.status_door);
 
         // button to show current state of beam
-        btn_beam = (ImageButton) findViewById(R.id.status_beam);
+        btn_beam = findViewById(R.id.status_beam);
 
         // initialize SSL
-        log("initialize SSL");
         sslSocketFactory = Utilities.initSSL(this, password);
-        log("initialize SSL done");
 
         // disable NetworkOnMainThreadException - otherwise the onPause takes a crap when it tries to close sockets
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitNetwork().build();
@@ -96,8 +94,6 @@ public class GarageStatus extends Activity {
 
     @Override
     protected void onStart() {
-        log("onStart");
-
         taskStatus = new GetStatus();
         taskStatus.execute();
         super.onStart();
@@ -105,7 +101,6 @@ public class GarageStatus extends Activity {
 
     @Override
     protected void onPause() {
-        log("onPause");
         taskStatus.cancel(true);
         if (sockStatus != null) {
             try {
@@ -126,7 +121,6 @@ public class GarageStatus extends Activity {
 
     @Override
     public void onDestroy() {
-        log("onDestroy");
         stopLogging();
         super.onDestroy();
     }
@@ -139,23 +133,15 @@ public class GarageStatus extends Activity {
             String[] statuses;
 
             try {
-                log("open status socket");
                 sockStatus = sslSocketFactory.createSocket(host, port);
-                log("open status socket done");
-                log("open command socket");
                 sockCommand = sslSocketFactory.createSocket(host, port);
-                log("open command socket done");
                 // sockStatus.getInputStream takes about 2 seconds because of the SSL handshake
                 BufferedReader br = new BufferedReader(new InputStreamReader(sockStatus.getInputStream(), "ASCII"));
-                log("BufferedReader done");
                 if (br.readLine().equals(Utilities.RESPONSE)) {
-                    log("readLine done");
                     sockStatus.getOutputStream().write("STATUS\n".getBytes());
 
                     // read status changes until we exit
-                    log("starting loop");
                     while (!isCancelled()) {
-                        log("loop");
                         try {
                             status = br.readLine();
                             log("Status: " + status);
@@ -176,7 +162,6 @@ public class GarageStatus extends Activity {
                 } else {
                     publishProgress("error", "Invalid response");
                 }
-                log("loop done");
                 sockStatus.close();
             } catch (Exception e) {
                 publishProgress("error", e.getMessage());
@@ -186,7 +171,7 @@ public class GarageStatus extends Activity {
 
         @Override
         protected void onProgressUpdate(String... values) {
-            log("GetStatus onProgressUpdate: " + Arrays.toString(values));
+            log(Arrays.toString(values));
             if (values[0].equals("error")) {
                 // error message from exception
                 Toast.makeText(ctx, values[1], Toast.LENGTH_LONG).show();
@@ -241,19 +226,16 @@ public class GarageStatus extends Activity {
         @Override
         protected Void doInBackground(String... params) {
             try {
-                log("SendCmd");
                 if (sockCommand != null) {
                     sockCommand.getOutputStream().write((params[0] + "\n").getBytes());
                 }
             } catch (Exception e) {
                 publishProgress(e.getMessage());
-                log("open command socket");
                 try {
                     sockCommand = sslSocketFactory.createSocket(host, port);
                 } catch (Exception e1) {
                     publishProgress(e1.getMessage());
                 }
-                log("open command socket done");
             }
             return null;
         }

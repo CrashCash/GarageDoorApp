@@ -147,17 +147,31 @@ public class Utilities {
             Process process = Runtime.getRuntime().exec(new String[]{"su", option, command});
             return process.waitFor() == 0;
         } catch (Exception e) {
-            logExcept("executeCommandViaSu", e);
+            logExcept(e);
             return false;
         }
     }
 
     // go through the pain of setting up our own logging
-    static void setupLogging(Context ctx, String fn) {
+    static void setupLogging(final Context ctx, String fn) {
         try {
             Handler h = new FileHandler(ctx.getExternalFilesDir(null) + "/" + fn + "%g.txt", 256 * 1024, 100, true);
             h.setFormatter(new CustomLogFormatter());
             loggerSet.addHandler(h);
+
+            // log when it dies horribly
+            final Thread.UncaughtExceptionHandler uncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
+            Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+                @Override
+                public void uncaughtException(Thread paramThread, Throwable ex) {
+                    Toast.makeText(ctx, "Uncaught exception: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+                    for (String line : Log.getStackTraceString(ex).split("\\R+")) {
+                        loggerSet.info(line);
+                    }
+                    // call Android default handler
+                    uncaughtExceptionHandler.uncaughtException(paramThread, ex);
+                }
+            });
         } catch (Exception e) {
             String msg = "Unable to initialize logging\n" + Log.getStackTraceString(e);
             Toast.makeText(ctx, msg, Toast.LENGTH_LONG).show();
@@ -165,23 +179,26 @@ public class Utilities {
         }
     }
 
-    // log to our own file so that messages don't get lost
-    static void log(String msg) {
-        loggerSet.info(msg);
+    // figure out where info was logged
+    static String whereami() {
+        StackTraceElement ste = Thread.currentThread().getStackTrace()[4];
+        String c = ste.getClassName();
+        c = c.substring(c.lastIndexOf(".") + 1);
+        String m = ste.getMethodName();
+        return c + ":" + m + ": ";
     }
 
-    // split lines so every one gets a timestamp and is sortable
-    static void logLines(String msg) {
-        for (String line : msg.split("\\R+")) {
-            loggerSet.info(line);
-        }
+    // log to our own file so that messages don't get lost
+    static void log(String msg) {
+        loggerSet.info(whereami() + msg);
     }
 
     // log exceptions so everyone sees them
-    static void logExcept(String fcn, Exception e) {
-        String fcn2 = e.getStackTrace()[0].getMethodName();
-        loggerSet.info(fcn + "(" + fcn2 + ") exception:");
-        logLines(Log.getStackTraceString(e));
+    // split lines so every one gets a timestamp and is sortable
+    static void logExcept(Exception e) {
+        for (String line : (whereami() + Log.getStackTraceString(e)).split("\\R+")) {
+            loggerSet.info(line);
+        }
     }
 
     // close logging file handlers to get rid of "lck" turdlets

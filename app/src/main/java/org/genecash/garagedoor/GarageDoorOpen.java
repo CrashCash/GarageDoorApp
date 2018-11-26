@@ -108,7 +108,7 @@ public class GarageDoorOpen extends Activity {
                         continue;
                     }
                 } catch (IOException e) {
-                    logExcept("OpenDoor", e);
+                    logExcept(e);
                     log("Network: " + isNetworkAvailable(ctx));
                     log("Data: " + isDataEnabled(cr));
                     if (!isDataEnabled(cr) && manageData) {
