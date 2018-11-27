@@ -2,8 +2,8 @@
 <manifest xmlns:android = "http://schemas.android.com/apk/res/android"
           xmlns:tools = "http://schemas.android.com/tools"
           package = "org.genecash.garagedoor"
-          android:versionCode = "1543229672"
-          android:versionName = "26-NOV-2018 05:54:32 AM">
+          android:versionCode = "1543306877"
+          android:versionName = "27-NOV-2018 03:21:17 AM">
 
     <uses-permission android:name = "android.permission.INTERNET" />
     <uses-permission android:name = "android.permission.ACCESS_NETWORK_STATE" />

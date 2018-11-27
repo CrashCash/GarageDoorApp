@@ -71,7 +71,7 @@ public class GarageDoorService extends Service implements LocationListener {
     SSLSocketFactory sslSocketFactory;
     Socket sock = null;
     String password;
-    long lastPing = 0;
+    long lastPing;
 
     // do we actually manage the cell data?
     boolean manageData;
@@ -84,10 +84,11 @@ public class GarageDoorService extends Service implements LocationListener {
     int interval_hi;
     int interval_lo;
     long startGPS;
+    // RATE_START is used so we don't immediately emit the whistle when started
     int RATE_START = 0;
-    int RATE_LOW = 0;
-    int RATE_HIGH = 0;
-    int rate = RATE_START;
+    int RATE_LOW = 1;
+    int RATE_HIGH = 2;
+    int rate;
     static boolean locationChanged = false;
     LocationManager locationManager;
 
@@ -227,12 +228,14 @@ public class GarageDoorService extends Service implements LocationListener {
             setDataEnabled(getContentResolver(), true);
         }
 
-        // acquire full lock so GPS works (fuck that partial wake lock shit!)
+        // acquire partial & full lock so GPS works
         pm = (PowerManager) getSystemService(POWER_SERVICE);
         cpuLockFull = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "GarageDoorService: GarageCPULock");
         cpuLockPartial = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "GarageDoorService: GarageCPULock");
         cpuLockFull.acquire();
         cpuLockPartial.acquire();
+        rate = RATE_START;
+        lastPing = 0;
 
         // initialize SSL
         sslSocketFactory = Utilities.initSSL(this, password);
@@ -312,7 +315,7 @@ public class GarageDoorService extends Service implements LocationListener {
             }
             if (rate != RATE_HIGH) {
                 if (rate != RATE_START) {
-                    notifyUpdate("switching to high rate", uriAlert);
+                    notifyUpdate("Switching to high rate", uriAlert);
                 }
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_hi * DateUtils.SECOND_IN_MILLIS, 0, this);
                 rate = RATE_HIGH;
@@ -327,7 +330,7 @@ public class GarageDoorService extends Service implements LocationListener {
             }
             if (rate != RATE_LOW) {
                 if (rate != RATE_START) {
-                    notifyUpdate("switching to low rate", uriAlert);
+                    notifyUpdate("Switching to low rate", uriAlert);
                 }
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_lo * DateUtils.SECOND_IN_MILLIS, 0, this);
                 rate = RATE_LOW;
@@ -447,7 +450,7 @@ public class GarageDoorService extends Service implements LocationListener {
 
     // update notification
     void notifyUpdate(String msg, Uri audio) {
-        log("notifyUpdate: " + msg + " " + audio);
+        log(msg + " " + audio);
         notifyBuilder.setContentText(msg);
         notifyManager.notify(NOTIFICATION_ID, notifyBuilder.build());
         if (audio != null && sound) {
@@ -466,7 +469,6 @@ public class GarageDoorService extends Service implements LocationListener {
                 Utilities.logExcept(e);
             }
         }
-        log(msg);
     }
 
     void notifyUpdate(String msg) {
@@ -487,7 +489,6 @@ public class GarageDoorService extends Service implements LocationListener {
 
     // request location updates from GPS
     void setupGPS() {
-        rate = RATE_START;
         command_sent = false;
         locationChanged = false;
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_hi * DateUtils.SECOND_IN_MILLIS, 0, this);
@@ -569,6 +570,7 @@ public class GarageDoorService extends Service implements LocationListener {
     synchronized void ping() {
         log("ping");
         if (!stop && sock != null) {
+            // rate-limit pings
             long now = System.currentTimeMillis();
             if (now - lastPing > 5 * DateUtils.SECOND_IN_MILLIS) {
                 lastPing = now;
