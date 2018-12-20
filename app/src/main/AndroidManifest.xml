@@ -2,8 +2,8 @@
 <manifest xmlns:android = "http://schemas.android.com/apk/res/android"
           xmlns:tools = "http://schemas.android.com/tools"
           package = "org.genecash.garagedoor"
-          android:versionCode = "1543306877"
-          android:versionName = "27-NOV-2018 03:21:17 AM">
+          android:versionCode = "1545338216"
+          android:versionName = "20-DEC-2018 03:36:56 PM">
 
     <uses-permission android:name = "android.permission.INTERNET" />
     <uses-permission android:name = "android.permission.ACCESS_NETWORK_STATE" />
@@ -72,38 +72,6 @@
             <intent-filter>
                 <action android:name = "android.intent.action.MAIN" />
                 <category android:name = "android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name = ".CloseApp"
-            android:icon = "@drawable/close_app"
-            android:label = "Garage Stop"
-            android:launchMode = "singleTop"
-            android:screenOrientation = "portrait"
-            android:theme = "@android:style/Theme.NoDisplay"
-            android:windowSoftInputMode = "stateHidden">
-            <intent-filter>
-                <action android:name = "android.intent.action.MAIN" />
-                <category android:name = "android.intent.category.LAUNCHER" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name = "org.genecash.garagedoor.stop" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name = ".ToggleApp"
-            android:icon = "@drawable/settings_app"
-            android:label = "Garage Toggle"
-            android:launchMode = "singleTop"
-            android:screenOrientation = "portrait"
-            android:theme = "@android:style/Theme.NoDisplay"
-            android:windowSoftInputMode = "stateHidden">
-            <intent-filter>
-                <action android:name = "android.intent.action.MAIN" />
-                <category android:name = "android.intent.category.LAUNCHER" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name = "org.genecash.garagedoor.toggle" />
             </intent-filter>
         </activity>
 

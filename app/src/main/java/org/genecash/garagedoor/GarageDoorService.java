@@ -5,6 +5,7 @@ import android.app.Notification;
 import android.app.Notification.Builder;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
@@ -147,17 +148,24 @@ public class GarageDoorService extends Service implements LocationListener {
         String channelID = "GarageDoor";
         NotificationChannel notificationChannel = new NotificationChannel(channelID, "Garage Door", NotificationManager.IMPORTANCE_HIGH);
         notificationChannel.enableLights(true);
-        // turn off default sound
         notificationChannel.setSound(null, null);
         notificationChannel.setLightColor(Color.RED);
         notifyManager.createNotificationChannel(notificationChannel);
+
+        Intent intentStop = new Intent(Utilities.ACTION_STOP);
+        PendingIntent pendingIntentStop = PendingIntent.getBroadcast(this, 0, intentStop, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Intent intentToggle = new Intent(Utilities.ACTION_TOGGLE);
+        PendingIntent pendingIntentToggle = PendingIntent.getBroadcast(this, 0, intentToggle, PendingIntent.FLAG_UPDATE_CURRENT);
 
         notifyBuilder = new Notification.Builder(this, channelID)
                 .setContentTitle("Garage Door Opener")
                 .setContentText("Initializing")
                 .setSmallIcon(R.drawable.open_app)
                 .setOngoing(true)
-                .setStyle(new Notification.BigTextStyle());
+                .setStyle(new Notification.BigTextStyle())
+                .addAction(android.R.drawable.ic_delete, "Stop", pendingIntentStop)
+                .addAction(android.R.drawable.ic_menu_rotate, "Toggle", pendingIntentToggle);
 
         // start in foreground so we don't get killed - must do this as soon as possible
         startForeground(NOTIFICATION_ID, notifyBuilder.build());
