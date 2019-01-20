@@ -2,8 +2,8 @@
 <manifest xmlns:android = "http://schemas.android.com/apk/res/android"
           xmlns:tools = "http://schemas.android.com/tools"
           package = "org.genecash.garagedoor"
-          android:versionCode = "1545338216"
-          android:versionName = "20-DEC-2018 03:36:56 PM">
+          android:versionCode = "1548022201"
+          android:versionName = "20-JAN-2019 05:10:01 PM">
 
     <uses-permission android:name = "android.permission.INTERNET" />
     <uses-permission android:name = "android.permission.ACCESS_NETWORK_STATE" />
@@ -36,7 +36,8 @@
         <activity
             android:name = ".GarageDoorOpen"
             android:icon = "@drawable/open_app"
-            android:label = "Garage Arm">
+            android:label = "Garage Arm"
+            android:theme = "@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name = "android.intent.action.MAIN" />
                 <category android:name = "android.intent.category.LAUNCHER" />
@@ -45,7 +46,8 @@
         <activity
             android:name = ".GarageDoorButton"
             android:icon = "@drawable/open_app"
-            android:label = "Garage Button">
+            android:label = "Garage Button"
+            android:theme = "@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name = "android.intent.action.MAIN" />
                 <category android:name = "android.intent.category.LAUNCHER" />
@@ -90,6 +92,9 @@
         <receiver android:name = ".BluetoothReceiver">
             <intent-filter android:priority = "10000">
                 <action android:name = "android.bluetooth.device.action.ACL_CONNECTED" />
+            </intent-filter>
+            <intent-filter android:priority = "10000">
+                <action android:name = "android.bluetooth.device.action." />
             </intent-filter>
             <intent-filter android:priority = "10000">
                 <action android:name = "android.intent.action.MEDIA_BUTTON" />
