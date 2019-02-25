@@ -65,6 +65,7 @@ public class GarageDoorService extends Service implements LocationListener {
     boolean sound;
     static final int NOTIFICATION_ID = 1;
     long lastWhistle = 0;
+    String lastNotification = "";
 
     // network info
     String hostname;
@@ -90,8 +91,10 @@ public class GarageDoorService extends Service implements LocationListener {
     int RATE_LOW = 1;
     int RATE_HIGH = 2;
     int rate;
+    String stringRate = "Not Connected";
     static boolean locationChanged = false;
     LocationManager locationManager;
+    String position = "";
 
     // queue of button press times
     Queue<Long> presses = new ArrayDeque<>();
@@ -271,6 +274,7 @@ public class GarageDoorService extends Service implements LocationListener {
     // we are using the old platform location API instead of the Google Location Services API from
     // Google Play Services, because it's more reliable, and doesn't get randomly screwed by Play updates.
     // http://developer.android.com/guide/topics/location/strategies.html
+    @SuppressLint("DefaultLocale")
     @Override
     public void onLocationChanged(Location location) {
         if (stop) {
@@ -291,8 +295,11 @@ public class GarageDoorService extends Service implements LocationListener {
         int distance = (int) location.distanceTo(destination);
         float meters_sec = location.getSpeed();
         float miles_hour = (float) (meters_sec * 2.23694);
-        log("GPS: " + location.getLatitude() + "," + location.getLongitude() + " " + distance + "m " + meters_sec + "m/s " +
-            miles_hour + "mph");
+        position = String.format("GPS: (%s) %.4f,%.4f %,dm %.1fm/s %.1fmph", stringRate,
+                                 location.getLatitude(), location.getLongitude(),
+                                 distance, meters_sec, miles_hour);
+        log(position);
+        notifyUpdate(null);
 
         if (distance < radius_open) {
             if (!command_sent) {
@@ -327,6 +334,8 @@ public class GarageDoorService extends Service implements LocationListener {
                 }
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_hi * DateUtils.SECOND_IN_MILLIS, 0, this);
                 rate = RATE_HIGH;
+                stringRate = "High";
+                notifyUpdate(null);
             }
 
             // keep connection alive
@@ -342,6 +351,8 @@ public class GarageDoorService extends Service implements LocationListener {
                 }
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_lo * DateUtils.SECOND_IN_MILLIS, 0, this);
                 rate = RATE_LOW;
+                stringRate = "Low";
+                notifyUpdate(null);
             }
         }
     }
@@ -458,8 +469,15 @@ public class GarageDoorService extends Service implements LocationListener {
 
     // update notification
     void notifyUpdate(String msg, Uri audio) {
-        log(msg + " " + audio);
-        notifyBuilder.setContentText(msg);
+        if (msg == null) {
+            msg = lastNotification;
+        } else {
+            lastNotification = msg;
+            log(msg + " " + audio);
+        }
+
+        // you're allowed only 2 lines
+        notifyBuilder.setContentText(msg + "\n" + position);
         notifyManager.notify(NOTIFICATION_ID, notifyBuilder.build());
         if (audio != null && sound) {
             // wait for previous sound to finish

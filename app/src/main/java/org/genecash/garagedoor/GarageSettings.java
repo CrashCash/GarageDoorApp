@@ -180,8 +180,6 @@ public class GarageSettings extends Activity {
                 }
             });
 
-            // turn GPS on
-            Utilities.setGPSOn(getContentResolver(), true);
 
             // request location from GPS
             locationListener = new LocationListener() {
