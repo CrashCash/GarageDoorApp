@@ -44,6 +44,7 @@ import static org.genecash.garagedoor.Utilities.RESPONSE;
 import static org.genecash.garagedoor.Utilities.isDataEnabled;
 import static org.genecash.garagedoor.Utilities.isNetworkAvailable;
 import static org.genecash.garagedoor.Utilities.log;
+import static org.genecash.garagedoor.Utilities.setAirplaneModeActive;
 import static org.genecash.garagedoor.Utilities.setDataEnabled;
 import static org.genecash.garagedoor.Utilities.setupLogging;
 import static org.genecash.garagedoor.Utilities.sleep;
@@ -234,9 +235,14 @@ public class GarageDoorService extends Service implements LocationListener {
         log(String.format("manage data: %s", manageData));
         log(String.format("manage GPS: %s", manageGPS));
 
+        ContentResolver cr = getContentResolver();
+
+        // turn off airplane mode
+        setAirplaneModeActive(cr, false);
+
         // turn on cell data
         if (manageData) {
-            setDataEnabled(getContentResolver(), true);
+            setDataEnabled(cr, true);
         }
 
         // acquire partial & full lock so GPS works
@@ -252,8 +258,8 @@ public class GarageDoorService extends Service implements LocationListener {
         sslSocketFactory = Utilities.initSSL(this, password);
 
         // turn on GPS
-        if (!Utilities.getGPSOn(getContentResolver())) {
-            Utilities.setGPSOn(getContentResolver(), true);
+        if (!Utilities.getGPSOn(cr)) {
+            Utilities.setGPSOn(cr, true);
             sleep(2 * DateUtils.SECOND_IN_MILLIS);
         }
 
@@ -417,6 +423,7 @@ public class GarageDoorService extends Service implements LocationListener {
     @Override
     public void onDestroy() {
         toast("Garage Door application exiting");
+        ContentResolver cr = getContentResolver();
 
         if (sock != null) {
             closeSocket();
@@ -427,12 +434,12 @@ public class GarageDoorService extends Service implements LocationListener {
             locationManager.removeUpdates(this);
         }
         if (manageGPS) {
-            Utilities.setGPSOn(getContentResolver(), false);
+            Utilities.setGPSOn(cr, false);
         }
 
         // turn off cell data
         if (manageData) {
-            setDataEnabled(getContentResolver(), false);
+            setDataEnabled(cr, false);
         }
 
         // unregister all broadcast receivers

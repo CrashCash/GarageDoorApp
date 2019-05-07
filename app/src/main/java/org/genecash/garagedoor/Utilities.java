@@ -6,6 +6,7 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.provider.Settings;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -137,6 +138,34 @@ public class Utilities {
     // is mobile data enabled?
     static boolean isDataEnabled(ContentResolver cr) {
         return Settings.Global.getInt(cr, "mobile_data", 0) == 1;
+    }
+
+    static void setAirplaneModeActive(ContentResolver cr, boolean flag) {
+        if (isAirplaneModeActive(cr) == flag) {
+            return;
+        }
+        log("setAirplaneModeActive: " + flag);
+
+        String cmd1, cmd2;
+        if (flag) {
+            cmd1 = "settings put global airplane_mode_on 1";
+        } else {
+            cmd1 = "settings put global airplane_mode_on 0";
+        }
+        cmd2 = "am broadcast -a android.intent.action.AIRPLANE_MODE";
+
+        boolean rc1 = executeCommandViaSu("-c", cmd1);
+        boolean rc2 = executeCommandViaSu("-c", cmd2);
+        if (!rc1 || !rc2) {
+            log("setAirplaneModeActive unable to set airplane mode state");
+            return;
+        }
+        sleep((2 * DateUtils.SECOND_IN_MILLIS));
+    }
+
+    // is airplane mode active?
+    static boolean isAirplaneModeActive(ContentResolver cr) {
+        return Settings.System.getInt(cr, Settings.Global.AIRPLANE_MODE_ON, 0) == 1;
     }
 
     // execute a superuser command
