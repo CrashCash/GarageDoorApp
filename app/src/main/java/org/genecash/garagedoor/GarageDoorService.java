@@ -95,7 +95,7 @@ public class GarageDoorService extends Service implements LocationListener {
     String stringRate = "Not Connected";
     static boolean locationChanged = false;
     LocationManager locationManager;
-    String position = "";
+    // String position = "";
 
     // queue of button press times
     Queue<Long> presses = new ArrayDeque<>();
@@ -299,13 +299,13 @@ public class GarageDoorService extends Service implements LocationListener {
         }
 
         int distance = (int) location.distanceTo(destination);
-        float meters_sec = location.getSpeed();
-        float miles_hour = (float) (meters_sec * 2.23694);
-        position = String.format("GPS: (%s) %.4f,%.4f %,dm %.1fm/s %.1fmph", stringRate,
-                                 location.getLatitude(), location.getLongitude(),
-                                 distance, meters_sec, miles_hour);
-        log(position);
-        notifyUpdate(null);
+        // float meters_sec = location.getSpeed();
+        // float miles_hour = (float) (meters_sec * 2.23694);
+        // position = String.format("GPS: (%s) %.4f,%.4f %,dm %.1fm/s %.1fmph", stringRate,
+        //                          location.getLatitude(), location.getLongitude(),
+        //                          distance, meters_sec, miles_hour);
+        // log(position);
+        // notifyUpdate(null);
 
         if (distance < radius_open) {
             if (!command_sent) {
@@ -484,7 +484,7 @@ public class GarageDoorService extends Service implements LocationListener {
         }
 
         // you're allowed only 2 lines
-        notifyBuilder.setContentText(msg + "\n" + position);
+        notifyBuilder.setContentText(msg);
         notifyManager.notify(NOTIFICATION_ID, notifyBuilder.build());
         if (audio != null && sound) {
             // wait for previous sound to finish
