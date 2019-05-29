@@ -34,12 +34,14 @@ public class Utilities {
     static final String PREFS_LATITUDE = "Pos_Latitude";
     static final String PREFS_LONGITUDE = "Pos_Longitude";
     static final String PREFS_RADIUS_OPEN = "Radius_Open";
-    static final String PREFS_RADIUS_RATE = "Radius_Rate";
+    static final String PREFS_RADIUS_HIGH = "Radius_High";
+    static final String PREFS_RADIUS_LOW = "Radius_Low";
     static final String PREFS_DEBUG = "Debug_Flag";
     static final String PREFS_LOCK = "Lockscreen_Flag";
     static final String PREFS_NOISE = "org.genecash.garagedoor.noise";
-    static final String PREFS_RATE_LO = "Rate_Low";
-    static final String PREFS_RATE_HI = "Rate_High";
+    static final String PREFS_RATE_HIGH = "Rate_High";
+    static final String PREFS_RATE_MED = "Rate_Med";
+    static final String PREFS_RATE_LOW = "Rate_Low";
     static final String PREFS_BT_NAME = "Bluetooth_Name";
     static final String PREFS_KEYSTORE_PASSWORD = "Keystore_Password";
     static final String RESPONSE = "GARAGEDOOR";

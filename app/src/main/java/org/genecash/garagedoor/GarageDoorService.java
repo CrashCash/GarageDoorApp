@@ -83,14 +83,17 @@ public class GarageDoorService extends Service implements LocationListener {
     boolean manageGPS;
     Location destination;
     int radius_open;
-    int radius_rate;
-    int interval_hi;
-    int interval_lo;
+    int radius_high;
+    int radius_low;
+    int interval_high;
+    int interval_med;
+    int interval_low;
     long startGPS;
     // RATE_START is used so we don't immediately emit the whistle when started
     int RATE_START = 0;
     int RATE_LOW = 1;
-    int RATE_HIGH = 2;
+    int RATE_MED = 2;
+    int RATE_HIGH = 3;
     int rate;
     String stringRate = "Not Connected";
     static boolean locationChanged = false;
@@ -195,12 +198,15 @@ public class GarageDoorService extends Service implements LocationListener {
         float latitude = prefs.getFloat(Utilities.PREFS_LATITUDE, 400);
         float longitude = prefs.getFloat(Utilities.PREFS_LONGITUDE, 400);
         radius_open = prefs.getInt(Utilities.PREFS_RADIUS_OPEN, 0);
-        radius_rate = prefs.getInt(Utilities.PREFS_RADIUS_RATE, 0);
-        interval_hi = prefs.getInt(Utilities.PREFS_RATE_HI, -1);
-        interval_lo = prefs.getInt(Utilities.PREFS_RATE_LO, -1);
+        radius_high = prefs.getInt(Utilities.PREFS_RADIUS_HIGH, 0);
+        radius_low = prefs.getInt(Utilities.PREFS_RADIUS_LOW, 0);
+        interval_high = prefs.getInt(Utilities.PREFS_RATE_HIGH, -1);
+        interval_med = prefs.getInt(Utilities.PREFS_RATE_MED, -1);
+        interval_low = prefs.getInt(Utilities.PREFS_RATE_LOW, -1);
 
         // sanity check
-        if (latitude == 400 || longitude == 400 || radius_open == 0 || radius_rate == 0 || interval_hi == -1 || interval_lo == -1) {
+        if (latitude == 400 || longitude == 400 || radius_open == 0 || radius_high == 0 || radius_low == 0 || interval_high == -1
+            || interval_med == -1 || interval_low == -1) {
             log("preferences not set - exiting");
             toast("Preferences not set - exiting");
             stop = true;
@@ -228,10 +234,12 @@ public class GarageDoorService extends Service implements LocationListener {
         log("----------------------------------------------------------------");
         log(String.format("host/port: %s/%d", hostname, port));
         log(String.format("dest: %.4f,%.4f", latitude, longitude));
-        log(String.format("rate radius: %d", radius_rate));
+        log(String.format("low radius: %d", radius_low));
+        log(String.format("high radius: %d", radius_high));
         log(String.format("open radius: % d", radius_open));
-        log(String.format("hi rate: %d", interval_hi));
-        log(String.format("lo rate: %d", interval_lo));
+        log(String.format("low rate: %d", interval_low));
+        log(String.format("med rate: %d", interval_med));
+        log(String.format("high rate: %d", interval_high));
         log(String.format("manage data: %s", manageData));
         log(String.format("manage GPS: %s", manageGPS));
 
@@ -326,39 +334,53 @@ public class GarageDoorService extends Service implements LocationListener {
             }
         } else {
             command_sent = false;
-        }
-
-        // tune data rate to preserve battery
-        if (distance < radius_rate) {
-            // inside the radius, open socket and switch to high rate
-            if (sock == null) {
-                OpenSocket();
-            }
-            if (rate != RATE_HIGH) {
-                if (rate != RATE_START) {
-                    notifyUpdate("Switching to high rate", uriAlert);
+            // tune data rate to preserve battery
+            if (distance < radius_high) {
+                // inside the high radius, open socket and switch to high rate
+                if (sock == null) {
+                    OpenSocket();
                 }
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_hi * DateUtils.SECOND_IN_MILLIS, 0, this);
-                rate = RATE_HIGH;
-                stringRate = "High";
-                notifyUpdate(null);
-            }
-
-            // keep connection alive
-            ping();
-        } else {
-            // outside the radius, close the socket and switch to low rate
-            if (sock != null) {
-                closeSocket();
-            }
-            if (rate != RATE_LOW) {
-                if (rate != RATE_START) {
-                    notifyUpdate("Switching to low rate", uriAlert);
+                if (rate != RATE_HIGH) {
+                    if (rate != RATE_START) {
+                        notifyUpdate("Switching to high rate", uriAlert);
+                    }
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_high * DateUtils.SECOND_IN_MILLIS, 0,
+                                                           this);
+                    rate = RATE_HIGH;
+                    stringRate = "High";
+                    notifyUpdate(null);
                 }
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_lo * DateUtils.SECOND_IN_MILLIS, 0, this);
-                rate = RATE_LOW;
-                stringRate = "Low";
-                notifyUpdate(null);
+
+                // keep connection alive
+                ping();
+            } else {
+                // outside the high radius, close the socket and switch to low rate
+                if (sock != null) {
+                    closeSocket();
+                }
+                if (distance < radius_low) {
+                    if (rate != RATE_MED) {
+                        if (rate != RATE_START) {
+                            notifyUpdate("Switching to medium rate", uriAlert);
+                        }
+                        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_med * DateUtils.SECOND_IN_MILLIS, 0,
+                                                               this);
+                        rate = RATE_MED;
+                        stringRate = "Medium";
+                        notifyUpdate(null);
+                    }
+                } else {
+                    if (rate != RATE_LOW) {
+                        if (rate != RATE_START) {
+                            notifyUpdate("Switching to low rate", uriAlert);
+                        }
+                        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_low * DateUtils.SECOND_IN_MILLIS, 0,
+                                                               this);
+                        rate = RATE_LOW;
+                        stringRate = "Low";
+                        notifyUpdate(null);
+                    }
+                }
             }
         }
     }
@@ -480,7 +502,7 @@ public class GarageDoorService extends Service implements LocationListener {
             msg = lastNotification;
         } else {
             lastNotification = msg;
-            log(msg + " " + audio);
+            log(msg);
         }
 
         // you're allowed only 2 lines
@@ -524,7 +546,7 @@ public class GarageDoorService extends Service implements LocationListener {
     void setupGPS() {
         command_sent = false;
         locationChanged = false;
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_hi * DateUtils.SECOND_IN_MILLIS, 0, this);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_high * DateUtils.SECOND_IN_MILLIS, 0, this);
         startGPS = System.currentTimeMillis();
         notifyUpdate("Waiting for GPS");
     }

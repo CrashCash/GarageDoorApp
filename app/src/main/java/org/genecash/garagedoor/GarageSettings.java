@@ -38,7 +38,8 @@ public class GarageSettings extends Activity {
     LocationListener locationListener;
 
     // display widgets
-    EditText edIP, edPort, edBtName, edPassword, edLatitude, edLongitude, edRadiusOpen, edRadiusRate, edRateHi, edRateLo;
+    EditText edIP, edPort, edBtName, edPassword, edLatitude, edLongitude, edRadiusOpen, edRadiusHigh, edRadiusLow, edRateHigh, edRateMed,
+            edRateLow;
     CheckBox cbData, cbGPS, cbDebug, cbLock, cbNoise;
     Button bGPS;
 
@@ -77,9 +78,11 @@ public class GarageSettings extends Activity {
             edLatitude = findViewById(R.id.latitude);
             edLongitude = findViewById(R.id.longitude);
             edRadiusOpen = findViewById(R.id.radius_open);
-            edRadiusRate = findViewById(R.id.radius_rate);
-            edRateHi = findViewById(R.id.rate_hi);
-            edRateLo = findViewById(R.id.rate_lo);
+            edRadiusHigh = findViewById(R.id.radius_high);
+            edRadiusLow = findViewById(R.id.radius_low);
+            edRateHigh = findViewById(R.id.rate_high);
+            edRateMed = findViewById(R.id.rate_med);
+            edRateLow = findViewById(R.id.rate_low);
             cbData = findViewById(R.id.check_data);
             cbGPS = findViewById(R.id.check_gps);
             cbDebug = findViewById(R.id.check_debug);
@@ -95,9 +98,11 @@ public class GarageSettings extends Activity {
             edLatitude.setText("" + prefs.getFloat(Utilities.PREFS_LATITUDE, 28.543808f));
             edLongitude.setText("" + prefs.getFloat(Utilities.PREFS_LONGITUDE, -81.20185f));
             edRadiusOpen.setText("" + prefs.getInt(Utilities.PREFS_RADIUS_OPEN, 60));
-            edRadiusRate.setText("" + prefs.getInt(Utilities.PREFS_RADIUS_RATE, 2000));
-            edRateHi.setText("" + prefs.getInt(Utilities.PREFS_RATE_HI, 1));
-            edRateLo.setText("" + prefs.getInt(Utilities.PREFS_RATE_LO, 30));
+            edRadiusHigh.setText("" + prefs.getInt(Utilities.PREFS_RADIUS_HIGH, 1000));
+            edRadiusLow.setText("" + prefs.getInt(Utilities.PREFS_RADIUS_LOW, 5000));
+            edRateHigh.setText("" + prefs.getInt(Utilities.PREFS_RATE_HIGH, 0));
+            edRateMed.setText("" + prefs.getInt(Utilities.PREFS_RATE_MED, 30));
+            edRateLow.setText("" + prefs.getInt(Utilities.PREFS_RATE_LOW, 300));
             cbData.setChecked(prefs.getBoolean(Utilities.PREFS_DATA, true));
             cbGPS.setChecked(prefs.getBoolean(Utilities.PREFS_GPS, true));
             cbDebug.setChecked(prefs.getBoolean(Utilities.PREFS_DEBUG, true));
@@ -139,14 +144,16 @@ public class GarageSettings extends Activity {
                     }
                     try {
                         editor.putInt(Utilities.PREFS_RADIUS_OPEN, Integer.parseInt(edRadiusOpen.getText().toString()));
-                        editor.putInt(Utilities.PREFS_RADIUS_RATE, Integer.parseInt(edRadiusRate.getText().toString()));
+                        editor.putInt(Utilities.PREFS_RADIUS_HIGH, Integer.parseInt(edRadiusHigh.getText().toString()));
+                        editor.putInt(Utilities.PREFS_RADIUS_LOW, Integer.parseInt(edRadiusLow.getText().toString()));
                     } catch (NumberFormatException e) {
                         Toast.makeText(getApplicationContext(), "Radii must be an integer", Toast.LENGTH_LONG).show();
                         return;
                     }
                     try {
-                        editor.putInt(Utilities.PREFS_RATE_HI, Integer.parseInt(edRateHi.getText().toString()));
-                        editor.putInt(Utilities.PREFS_RATE_LO, Integer.parseInt(edRateLo.getText().toString()));
+                        editor.putInt(Utilities.PREFS_RATE_HIGH, Integer.parseInt(edRateHigh.getText().toString()));
+                        editor.putInt(Utilities.PREFS_RATE_MED, Integer.parseInt(edRateMed.getText().toString()));
+                        editor.putInt(Utilities.PREFS_RATE_LOW, Integer.parseInt(edRateLow.getText().toString()));
                     } catch (NumberFormatException e) {
                         Toast.makeText(getApplicationContext(), "GPS refresh rates must be an integer", Toast.LENGTH_LONG).show();
                         return;
@@ -179,7 +186,6 @@ public class GarageSettings extends Activity {
                     fetchIP();
                 }
             });
-
 
             // request location from GPS
             locationListener = new LocationListener() {

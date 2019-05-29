@@ -121,34 +121,35 @@
             android:layout_width = "wrap_content"
             android:layout_height = "wrap_content"
             android:layout_gravity = "center_vertical|right"
-            android:text = "Open Radius:" />
+            android:text = "Radius (meters): Low:" />
+        <EditText
+            android:id = "@+id/radius_low"
+            android:layout_width = "wrap_content"
+            android:layout_height = "wrap_content"
+            android:gravity = "center_vertical|right"
+            android:inputType = "number" />
+        <TextView
+            android:layout_width = "wrap_content"
+            android:layout_height = "wrap_content"
+            android:layout_gravity = "center_vertical|right"
+            android:text = " - High:" />
+        <EditText
+            android:id = "@+id/radius_high"
+            android:layout_width = "wrap_content"
+            android:layout_height = "wrap_content"
+            android:gravity = "center_vertical|right"
+            android:inputType = "number" />
+        <TextView
+            android:layout_width = "wrap_content"
+            android:layout_height = "wrap_content"
+            android:layout_gravity = "center_vertical|right"
+            android:text = " - Open:" />
         <EditText
             android:id = "@+id/radius_open"
             android:layout_width = "wrap_content"
             android:layout_height = "wrap_content"
             android:gravity = "center_vertical|right"
             android:inputType = "number" />
-        <TextView
-            android:layout_width = "wrap_content"
-            android:layout_height = "fill_parent"
-            android:gravity = "center_vertical"
-            android:text = "Meters" />
-        <TextView
-            android:layout_width = "wrap_content"
-            android:layout_height = "wrap_content"
-            android:layout_gravity = "center_vertical|right"
-            android:text = "    Rate Radius:" />
-        <EditText
-            android:id = "@+id/radius_rate"
-            android:layout_width = "wrap_content"
-            android:layout_height = "wrap_content"
-            android:gravity = "center_vertical|right"
-            android:inputType = "number" />
-        <TextView
-            android:layout_width = "wrap_content"
-            android:layout_height = "wrap_content"
-            android:gravity = "center_vertical"
-            android:text = "Meters" />
     </LinearLayout>
     <LinearLayout
         android:layout_width = "fill_parent"
@@ -158,9 +159,9 @@
             android:layout_width = "wrap_content"
             android:layout_height = "wrap_content"
             android:layout_gravity = "center_vertical|right"
-            android:text = "GPS Refresh Rate - Low:" />
+            android:text = "GPS Refresh Rate (seconds): Low:" />
         <EditText
-            android:id = "@+id/rate_lo"
+            android:id = "@+id/rate_low"
             android:layout_width = "wrap_content"
             android:layout_height = "wrap_content"
             android:gravity = "center_vertical|right"
@@ -169,9 +170,9 @@
             android:layout_width = "wrap_content"
             android:layout_height = "wrap_content"
             android:layout_gravity = "center_vertical|right"
-            android:text = "High:" />
+            android:text = " - Med:" />
         <EditText
-            android:id = "@+id/rate_hi"
+            android:id = "@+id/rate_med"
             android:layout_width = "wrap_content"
             android:layout_height = "wrap_content"
             android:gravity = "center_vertical|right"
@@ -179,8 +180,14 @@
         <TextView
             android:layout_width = "wrap_content"
             android:layout_height = "wrap_content"
-            android:gravity = "center_vertical"
-            android:text = "Seconds" />
+            android:layout_gravity = "center_vertical|right"
+            android:text = " - High:" />
+        <EditText
+            android:id = "@+id/rate_high"
+            android:layout_width = "wrap_content"
+            android:layout_height = "wrap_content"
+            android:gravity = "center_vertical|right"
+            android:inputType = "number" />
     </LinearLayout>
     <Button
         android:id = "@+id/mark"
