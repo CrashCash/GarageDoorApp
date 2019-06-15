@@ -41,6 +41,7 @@ import java.util.Queue;
 import javax.net.ssl.SSLSocketFactory;
 
 import static org.genecash.garagedoor.Utilities.RESPONSE;
+import static org.genecash.garagedoor.Utilities.isAirplaneModeActive;
 import static org.genecash.garagedoor.Utilities.isDataEnabled;
 import static org.genecash.garagedoor.Utilities.isNetworkAvailable;
 import static org.genecash.garagedoor.Utilities.log;
@@ -95,10 +96,10 @@ public class GarageDoorService extends Service implements LocationListener {
     int RATE_MED = 2;
     int RATE_HIGH = 3;
     int rate;
-    String stringRate = "Not Connected";
+    String stringRate = "Unknown";
     static boolean locationChanged = false;
     LocationManager locationManager;
-    // String position = "";
+    String position = "";
 
     // queue of button press times
     Queue<Long> presses = new ArrayDeque<>();
@@ -307,12 +308,11 @@ public class GarageDoorService extends Service implements LocationListener {
         }
 
         int distance = (int) location.distanceTo(destination);
-        // float meters_sec = location.getSpeed();
-        // float miles_hour = (float) (meters_sec * 2.23694);
-        // position = String.format("GPS: (%s) %.4f,%.4f %,dm %.1fm/s %.1fmph", stringRate,
-        //                          location.getLatitude(), location.getLongitude(),
-        //                          distance, meters_sec, miles_hour);
-        // log(position);
+        float meters_sec = location.getSpeed();
+        float miles_hour = (float) (meters_sec * 2.23694);
+        position = String.format("GPS: (%s) %.4f,%.4f %,dm %.1fm/s %.1fmph", stringRate, location.getLatitude(), location.getLongitude(),
+                                 distance, meters_sec, miles_hour);
+        log(position);
         // notifyUpdate(null);
 
         if (distance < radius_open) {
@@ -341,9 +341,7 @@ public class GarageDoorService extends Service implements LocationListener {
                     OpenSocket();
                 }
                 if (rate != RATE_HIGH) {
-                    if (rate != RATE_START) {
-                        notifyUpdate("Switching to high rate", uriAlert);
-                    }
+                    notifyUpdate("Switching to high rate", uriAlert, rate == RATE_START);
                     locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_high * DateUtils.SECOND_IN_MILLIS, 0,
                                                            this);
                     rate = RATE_HIGH;
@@ -360,9 +358,7 @@ public class GarageDoorService extends Service implements LocationListener {
                 }
                 if (distance < radius_low) {
                     if (rate != RATE_MED) {
-                        if (rate != RATE_START) {
-                            notifyUpdate("Switching to medium rate", uriAlert);
-                        }
+                        notifyUpdate("Switching to medium rate", uriAlert, rate == RATE_START);
                         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_med * DateUtils.SECOND_IN_MILLIS, 0,
                                                                this);
                         rate = RATE_MED;
@@ -371,9 +367,7 @@ public class GarageDoorService extends Service implements LocationListener {
                     }
                 } else {
                     if (rate != RATE_LOW) {
-                        if (rate != RATE_START) {
-                            notifyUpdate("Switching to low rate", uriAlert);
-                        }
+                        notifyUpdate("Switching to low rate", uriAlert, rate == RATE_START);
                         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_low * DateUtils.SECOND_IN_MILLIS, 0,
                                                                this);
                         rate = RATE_LOW;
@@ -497,7 +491,10 @@ public class GarageDoorService extends Service implements LocationListener {
     }
 
     // update notification
-    void notifyUpdate(String msg, Uri audio) {
+    void notifyUpdate(String msg, Uri audio, boolean flag) {
+        if (flag) {
+            audio = null;
+        }
         if (msg == null) {
             msg = lastNotification;
         } else {
@@ -524,6 +521,10 @@ public class GarageDoorService extends Service implements LocationListener {
                 Utilities.logExcept(e);
             }
         }
+    }
+
+    void notifyUpdate(String msg, Uri audio) {
+        notifyUpdate(msg, audio, false);
     }
 
     void notifyUpdate(String msg) {
@@ -570,9 +571,10 @@ public class GarageDoorService extends Service implements LocationListener {
             } catch (Exception e) {
                 // sometimes we get a loop of ENETUNREACH (Network is unreachable) even though isDataEnabled() is true
                 ContentResolver cr = getContentResolver();
-                logExcept(e);
+                log("Airplane: " + isAirplaneModeActive(cr));
                 log("Network: " + isNetworkAvailable(this));
                 log("Data: " + isDataEnabled(cr));
+                logExcept(e);
                 if (!isDataEnabled(cr) && manageData) {
                     setDataEnabled(cr, true);
                     sleep(15 * DateUtils.SECOND_IN_MILLIS);
