@@ -323,6 +323,14 @@ public class GarageDoorService extends Service implements LocationListener {
                 stop = true;
                 log("exiting due to trip complete");
 
+                // pretty-print the total trip time
+                long millis = System.currentTimeMillis() - startGPS;
+                int seconds = (int) ((millis / 1000) % 60);
+                int minutes = (int) ((millis / (1000 * 60)) % 60);
+                int hours = (int) ((millis / (1000 * 60 * 60)) % 24);
+                String time = String.format("%d:%02d:%02d", hours, minutes, seconds);
+                notifyUpdate("Total trip time: " + time);
+
                 // give notification sound time to finish
                 new Handler().postDelayed(new Runnable() {
                     @Override

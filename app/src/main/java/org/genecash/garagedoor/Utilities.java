@@ -218,7 +218,8 @@ public class Utilities {
 
     // log to our own file so that messages don't get lost
     static void log(String msg) {
-        loggerSet.info(whereami() + msg);
+        // loggerSet.info(whereami() + msg);
+        loggerSet.info(msg);
     }
 
     // log exceptions so everyone sees them
