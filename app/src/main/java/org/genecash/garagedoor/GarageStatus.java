@@ -62,21 +62,9 @@ public class GarageStatus extends Activity {
 
         // button to open/close garage door & show current state
         btn_roll = findViewById(R.id.status_roll);
-        btn_roll.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                // this is how we have more than one AsyncTask running at a time
-                new SendCmd().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, (String[]) new String[]{"TOGGLE"});
-            }
-        });
 
         // button to disarm door
         btn_armed = findViewById(R.id.status_armed);
-        btn_armed.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new SendCmd().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, (String[]) new String[]{"ARM"});
-            }
-        });
 
         // button to show current state of back door
         btn_door = findViewById(R.id.status_door);
@@ -247,5 +235,14 @@ public class GarageStatus extends Activity {
             Toast.makeText(ctx, values[0], Toast.LENGTH_LONG).show();
             log("SendCmd exception: " + values[0]);
         }
+    }
+
+    public void clickRoll(View view) {
+        // this is how we have more than one AsyncTask running at a time
+        new SendCmd().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, (String[]) new String[]{"TOGGLE"});
+    }
+
+    public void clickArmed(View view) {
+        new SendCmd().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, (String[]) new String[]{"ARM"});
     }
 }

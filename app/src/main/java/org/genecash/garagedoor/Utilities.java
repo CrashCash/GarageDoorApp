@@ -92,7 +92,7 @@ public class Utilities {
     // pm grant org.genecash.garagedoor android.permission.WRITE_SECURE_SETTINGS
     static void setGPSOn(ContentResolver cr, boolean value) {
         int flag = Settings.Secure.LOCATION_MODE_OFF;
-        log("setGPSOn: " + value);
+        // log("setGPSOn: " + value);
         if (value) {
             // turn on JUST the GPS without that stupid goddamned Google "collect info" agree/disagree dialog
             // it is so nice to see the GPS icon in the power bar just blink on
@@ -122,7 +122,7 @@ public class Utilities {
         if (isDataEnabled(cr) == flag) {
             return true;
         }
-        log("setDataEnabled: " + flag);
+        // log("setDataEnabled: " + flag);
         String command;
         if (flag) {
             command = "svc data enable";

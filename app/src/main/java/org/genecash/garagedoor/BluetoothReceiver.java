@@ -32,7 +32,7 @@ public class BluetoothReceiver extends BroadcastReceiver {
         String action = intent.getAction();
         log("bluetooth intent: " + intent);
 
-        if (action == Intent.ACTION_MEDIA_BUTTON) {
+        if (action.equals(Intent.ACTION_MEDIA_BUTTON)) {
             KeyEvent event = intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
             log("bluetooth key event: " + event);
             int keyAction = event.getAction();

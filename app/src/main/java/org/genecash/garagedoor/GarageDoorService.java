@@ -296,6 +296,14 @@ public class GarageDoorService extends Service implements LocationListener {
             return;
         }
 
+        int distance = (int) location.distanceTo(destination);
+        float meters_sec = location.getSpeed();
+        float miles_hour = (float) (meters_sec * 2.23694);
+        position = String.format("GPS: (%s) %.4f,%.4f %,dm %.1fm/s %.1fmph", stringRate, location.getLatitude(), location.getLongitude(),
+                                 distance, meters_sec, miles_hour);
+        // log(position);
+        // notifyUpdate(null);
+
         if (!locationChanged) {
             // pretty-print the time it took to acquire the GPS location
             long millis = System.currentTimeMillis() - startGPS;
@@ -304,21 +312,15 @@ public class GarageDoorService extends Service implements LocationListener {
             // int hours   = (int) ((millis / (1000 * 60 * 60)) % 24);
             String time = String.format("%d:%02d", minutes, seconds);
             notifyUpdate("GPS acquired: " + time, uriRingtone);
+            log(position);
             locationChanged = true;
         }
-
-        int distance = (int) location.distanceTo(destination);
-        float meters_sec = location.getSpeed();
-        float miles_hour = (float) (meters_sec * 2.23694);
-        position = String.format("GPS: (%s) %.4f,%.4f %,dm %.1fm/s %.1fmph", stringRate, location.getLatitude(), location.getLongitude(),
-                                 distance, meters_sec, miles_hour);
-        log(position);
-        // notifyUpdate(null);
 
         if (distance < radius_open) {
             if (!command_sent) {
                 // tell the Raspberry Pi to open the door
                 notifyUpdate("Opening door", uriAlert);
+                log(position);
                 openDoor();
                 stop = true;
                 log("exiting due to trip complete");
@@ -349,6 +351,7 @@ public class GarageDoorService extends Service implements LocationListener {
                     OpenSocket();
                 }
                 if (rate != RATE_HIGH) {
+                    log(position);
                     notifyUpdate("Switching to high rate", uriAlert, rate == RATE_START);
                     locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_high * DateUtils.SECOND_IN_MILLIS, 0,
                                                            this);
@@ -366,6 +369,7 @@ public class GarageDoorService extends Service implements LocationListener {
                 }
                 if (distance < radius_low) {
                     if (rate != RATE_MED) {
+                        log(position);
                         notifyUpdate("Switching to medium rate", uriAlert, rate == RATE_START);
                         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_med * DateUtils.SECOND_IN_MILLIS, 0,
                                                                this);
@@ -375,6 +379,7 @@ public class GarageDoorService extends Service implements LocationListener {
                     }
                 } else {
                     if (rate != RATE_LOW) {
+                        log(position);
                         notifyUpdate("Switching to low rate", uriAlert, rate == RATE_START);
                         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_low * DateUtils.SECOND_IN_MILLIS, 0,
                                                                this);
@@ -401,17 +406,17 @@ public class GarageDoorService extends Service implements LocationListener {
                 statusString = "GPS Out Of Service";
                 break;
         }
-        log("onStatusChanged: " + statusString);
+        // log("onStatusChanged: " + statusString);
     }
 
     @Override
     public void onProviderEnabled(String provider) {
-        log("onProviderEnabled: " + provider);
+        // log("onProviderEnabled: " + provider);
     }
 
     @Override
     public void onProviderDisabled(String provider) {
-        log("onProviderDisabled: " + provider);
+        // log("onProviderDisabled: " + provider);
     }
 
     @Override
@@ -633,7 +638,7 @@ public class GarageDoorService extends Service implements LocationListener {
     }
 
     synchronized void ping() {
-        log("ping");
+        // log("ping");
         if (!stop && sock != null) {
             // rate-limit pings
             long now = System.currentTimeMillis();
