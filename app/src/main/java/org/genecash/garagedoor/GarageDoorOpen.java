@@ -19,6 +19,7 @@ import javax.net.ssl.SSLSocketFactory;
 import static org.genecash.garagedoor.Utilities.RESPONSE;
 import static org.genecash.garagedoor.Utilities.log;
 import static org.genecash.garagedoor.Utilities.logExcept;
+import static org.genecash.garagedoor.Utilities.setAirplaneModeActive;
 import static org.genecash.garagedoor.Utilities.setupLogging;
 import static org.genecash.garagedoor.Utilities.sleep;
 import static org.genecash.garagedoor.Utilities.stopLogging;
@@ -56,6 +57,10 @@ public class GarageDoorOpen extends Activity {
         StrictMode.setThreadPolicy(policy);
 
         SSLSocketFactory sslSocketFactory = Utilities.initSSL(ctx, password);
+
+        // turn off airplane mode
+        setAirplaneModeActive(getContentResolver(), false);
+
         while (true) {
             try {
                 // connect
@@ -86,6 +91,7 @@ public class GarageDoorOpen extends Activity {
                 }
             } catch (IOException e) {
                 logExcept(e);
+                sleep(DateUtils.SECOND_IN_MILLIS);
             }
             // don't spam the living hell out of the logs
             sleep(DateUtils.SECOND_IN_MILLIS / 2);

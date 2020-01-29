@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
+import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
@@ -22,7 +23,9 @@ import java.util.Arrays;
 import javax.net.ssl.SSLSocketFactory;
 
 import static org.genecash.garagedoor.Utilities.log;
+import static org.genecash.garagedoor.Utilities.setAirplaneModeActive;
 import static org.genecash.garagedoor.Utilities.setupLogging;
+import static org.genecash.garagedoor.Utilities.sleep;
 import static org.genecash.garagedoor.Utilities.stopLogging;
 
 public class GarageStatus extends Activity {
@@ -78,6 +81,9 @@ public class GarageStatus extends Activity {
         // disable NetworkOnMainThreadException - otherwise the onPause takes a crap when it tries to close sockets
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitNetwork().build();
         StrictMode.setThreadPolicy(policy);
+
+        // turn off airplane mode
+        setAirplaneModeActive(getContentResolver(), false);
     }
 
     @Override
@@ -164,8 +170,6 @@ public class GarageStatus extends Activity {
                 // error message from exception
                 Toast.makeText(ctx, values[1], Toast.LENGTH_LONG).show();
                 log("GetStatus error: " + values[1]);
-                // exit so the wrong status is not displayed
-                ctx.finish();
             } else if (values[0].equals("status")) {
                 // roll-up door
                 String status = values[1];
@@ -223,6 +227,7 @@ public class GarageStatus extends Activity {
                     sockCommand = sslSocketFactory.createSocket(host, port);
                 } catch (Exception e1) {
                     publishProgress(e1.getMessage());
+                    sleep(DateUtils.SECOND_IN_MILLIS);
                 }
             }
             return null;
