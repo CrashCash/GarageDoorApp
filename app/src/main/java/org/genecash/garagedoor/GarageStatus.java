@@ -6,7 +6,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
-import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
@@ -25,7 +24,6 @@ import javax.net.ssl.SSLSocketFactory;
 import static org.genecash.garagedoor.Utilities.log;
 import static org.genecash.garagedoor.Utilities.setAirplaneModeActive;
 import static org.genecash.garagedoor.Utilities.setupLogging;
-import static org.genecash.garagedoor.Utilities.sleep;
 import static org.genecash.garagedoor.Utilities.stopLogging;
 
 public class GarageStatus extends Activity {
@@ -227,7 +225,6 @@ public class GarageStatus extends Activity {
                     sockCommand = sslSocketFactory.createSocket(host, port);
                 } catch (Exception e1) {
                     publishProgress(e1.getMessage());
-                    sleep(DateUtils.SECOND_IN_MILLIS);
                 }
             }
             return null;

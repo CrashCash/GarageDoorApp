@@ -38,8 +38,7 @@ public class GarageSettings extends Activity {
     LocationListener locationListener;
 
     // display widgets
-    EditText edIP, edPort, edBtName, edPassword, edLatitude, edLongitude, edRadiusOpen, edRadiusHigh, edRadiusLow, edRateHigh, edRateMed,
-            edRateLow;
+    EditText edIP, edPort, edPassword, edLatitude, edLongitude, edRadiusOpen, edRadiusHigh, edRadiusLow, edRateHigh, edRateMed, edRateLow;
     CheckBox cbData, cbGPS, cbDebug, cbLock, cbNoise;
     Button bGPS;
 
@@ -73,7 +72,6 @@ public class GarageSettings extends Activity {
             // find fields
             edIP = findViewById(R.id.ip);
             edPort = findViewById(R.id.port);
-            edBtName = findViewById(R.id.bt_name);
             edPassword = findViewById(R.id.keystore_password);
             edLatitude = findViewById(R.id.latitude);
             edLongitude = findViewById(R.id.longitude);
@@ -93,7 +91,6 @@ public class GarageSettings extends Activity {
             // populate fields from current settings
             edIP.setText(prefs.getString(Utilities.PREFS_IP, "99.168.121.221"));
             edPort.setText("" + prefs.getInt(Utilities.PREFS_PORT, 17000));
-            edBtName.setText(prefs.getString(Utilities.PREFS_BT_NAME, ""));
             edPassword.setText(prefs.getString(Utilities.PREFS_KEYSTORE_PASSWORD, ""));
             edLatitude.setText("" + prefs.getFloat(Utilities.PREFS_LATITUDE, 28.543808f));
             edLongitude.setText("" + prefs.getFloat(Utilities.PREFS_LONGITUDE, -81.20185f));
@@ -129,7 +126,6 @@ public class GarageSettings extends Activity {
                 public void onClick(View v) {
                     SharedPreferences.Editor editor = prefs.edit();
                     editor.putString(Utilities.PREFS_IP, edIP.getText().toString().trim());
-                    editor.putString(Utilities.PREFS_BT_NAME, edBtName.getText().toString().trim());
                     editor.putString(Utilities.PREFS_KEYSTORE_PASSWORD, edPassword.getText().toString().trim());
                     editor.putBoolean(Utilities.PREFS_DATA, cbData.isChecked());
                     editor.putBoolean(Utilities.PREFS_GPS, cbGPS.isChecked());

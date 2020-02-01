@@ -8,9 +8,9 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.text.format.DateUtils;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
@@ -61,7 +61,8 @@ public class GarageDoorOpen extends Activity {
         // turn off airplane mode
         setAirplaneModeActive(getContentResolver(), false);
 
-        while (true) {
+        int errors = 10;
+        while (errors-- > 0) {
             try {
                 // connect
                 sock = sslSocketFactory.createSocket(hostname, port);
@@ -89,14 +90,17 @@ public class GarageDoorOpen extends Activity {
                     sock.close();
                     continue;
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 logExcept(e);
-                sleep(DateUtils.SECOND_IN_MILLIS);
             }
             // don't spam the living hell out of the logs
-            sleep(DateUtils.SECOND_IN_MILLIS / 2);
+            sleep(DateUtils.SECOND_IN_MILLIS);
         }
 
+        if (errors < 0) {
+            Toast.makeText(this, "Giving up", Toast.LENGTH_LONG).show();
+            log("retries exhausted");
+        }
         stopLogging();
         finish();
     }

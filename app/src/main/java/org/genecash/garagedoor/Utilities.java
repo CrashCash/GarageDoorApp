@@ -42,7 +42,6 @@ public class Utilities {
     static final String PREFS_RATE_HIGH = "Rate_High";
     static final String PREFS_RATE_MED = "Rate_Med";
     static final String PREFS_RATE_LOW = "Rate_Low";
-    static final String PREFS_BT_NAME = "Bluetooth_Name";
     static final String PREFS_KEYSTORE_PASSWORD = "Keystore_Password";
     static final String RESPONSE = "GARAGEDOOR";
     static final String SSL_CERT_FILE = "client.p12";

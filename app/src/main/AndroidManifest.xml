@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android = "http://schemas.android.com/apk/res/android"
-          xmlns:tools = "http://schemas.android.com/tools"
-          package = "org.genecash.garagedoor"
-          android:versionCode = "1580260790"
-          android:versionName = "28-JAN-2020 08:19:50 PM">
+    xmlns:tools = "http://schemas.android.com/tools"
+    package = "org.genecash.garagedoor"
+    android:versionCode = "1580520460"
+    android:versionName = "31-JAN-2020 08:27:40 PM">
 
     <uses-permission android:name = "android.permission.INTERNET" />
     <uses-permission android:name = "android.permission.ACCESS_NETWORK_STATE" />
@@ -14,8 +14,6 @@
     <uses-permission android:name = "android.permission.WRITE_SETTINGS" />
     <uses-permission android:name = "android.permission.WRITE_SECURE_SETTINGS" />
     <uses-permission android:name = "android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name = "android.permission.BLUETOOTH" />
-    <uses-permission android:name = "android.permission.BLUETOOTH_ADMIN" />
 
     <uses-feature android:name = "android.hardware.location.gps" />
     <application
@@ -89,18 +87,6 @@
                 <action android:name = "android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
-        <receiver android:name = ".BluetoothReceiver">
-            <intent-filter android:priority = "10000">
-                <action android:name = "android.bluetooth.device.action.ACL_CONNECTED" />
-            </intent-filter>
-            <intent-filter android:priority = "10000">
-                <action android:name = "android.bluetooth.device.action." />
-            </intent-filter>
-            <intent-filter android:priority = "10000">
-                <action android:name = "android.intent.action.MEDIA_BUTTON" />
-            </intent-filter>
-        </receiver>
-
         <service
             android:name = ".GarageDoorService"
             android:enabled = "true"
