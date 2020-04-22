@@ -19,6 +19,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -53,6 +54,14 @@ import static org.genecash.garagedoor.Utilities.stopLogging;
 
 @SuppressLint("MissingPermission")
 public class GarageDoorService extends Service implements LocationListener {
+    public enum status {
+        UNINITIALIZED,  // not yet acquired GPS
+        STARTED,        // GPS acquired
+        LEAVING,        // door opened, still at home
+        TRAVELING,      // left home
+        RETURNED        // door opened, we are exiting
+    }
+
     // locks
     WakeLock cpuLockFull;
     WakeLock cpuLockPartial;
@@ -97,7 +106,7 @@ public class GarageDoorService extends Service implements LocationListener {
     int RATE_HIGH = 3;
     int rate;
     String stringRate = "Unknown";
-    static boolean locationChanged = false;
+    status locationChanged = status.UNINITIALIZED;
     LocationManager locationManager;
     String position = "";
 
@@ -110,8 +119,6 @@ public class GarageDoorService extends Service implements LocationListener {
     // lock screen
     boolean lockScreen;
 
-    // the command to open the door has been sent and successfully processed
-    boolean command_sent;
     String command = "OPENCLOSE";
 
     // "Jane! Stop this crazy thing!"
@@ -174,6 +181,11 @@ public class GarageDoorService extends Service implements LocationListener {
                 .setStyle(new Notification.BigTextStyle())
                 .addAction(android.R.drawable.ic_delete, "Stop", pendingIntentStop)
                 .addAction(android.R.drawable.ic_menu_rotate, "Toggle", pendingIntentToggle);
+
+        // set volume to max
+        AudioManager audioManager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+        int max_volume = audioManager.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION);
+        audioManager.setStreamVolume(AudioManager.STREAM_NOTIFICATION, max_volume, 0);
 
         // start in foreground so we don't get killed - must do this as soon as possible
         startForeground(NOTIFICATION_ID, notifyBuilder.build());
@@ -304,7 +316,7 @@ public class GarageDoorService extends Service implements LocationListener {
         // log(position);
         // notifyUpdate(null);
 
-        if (!locationChanged) {
+        if (locationChanged == status.UNINITIALIZED) {
             // pretty-print the time it took to acquire the GPS location
             long millis = System.currentTimeMillis() - startGPS;
             int seconds = (int) ((millis / 1000) % 60);
@@ -313,37 +325,47 @@ public class GarageDoorService extends Service implements LocationListener {
             String time = String.format("%d:%02d", minutes, seconds);
             notifyUpdate("GPS acquired: " + time, uriRingtone);
             log(position);
-            locationChanged = true;
+            locationChanged = status.STARTED;
         }
 
         if (distance < radius_open) {
-            if (!command_sent) {
+            if (locationChanged == status.STARTED || locationChanged == status.TRAVELING) {
                 // tell the Raspberry Pi to open the door
                 notifyUpdate("Opening door", uriAlert);
                 log(position);
                 openDoor();
-                stop = true;
-                log("exiting due to trip complete");
 
-                // pretty-print the total trip time
-                long millis = System.currentTimeMillis() - startGPS;
-                int seconds = (int) ((millis / 1000) % 60);
-                int minutes = (int) ((millis / (1000 * 60)) % 60);
-                int hours = (int) ((millis / (1000 * 60 * 60)) % 24);
-                String time = String.format("%d:%02d:%02d", hours, minutes, seconds);
-                notifyUpdate("Total trip time: " + time);
+                if (locationChanged == status.STARTED) {
+                    locationChanged = status.LEAVING;
+                }
 
-                // give notification sound time to finish
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        stopSelf();
-                    }
-                }, 5 * DateUtils.SECOND_IN_MILLIS);
-                return;
+                if (locationChanged == status.TRAVELING) {
+                    locationChanged = status.RETURNED;
+                    stop = true;
+                    log("exiting due to trip complete");
+
+                    // pretty-print the total trip time
+                    long millis = System.currentTimeMillis() - startGPS;
+                    int seconds = (int) ((millis / 1000) % 60);
+                    int minutes = (int) ((millis / (1000 * 60)) % 60);
+                    int hours = (int) ((millis / (1000 * 60 * 60)) % 24);
+                    String time = String.format("%d:%02d:%02d", hours, minutes, seconds);
+                    notifyUpdate("Total trip time: " + time);
+
+                    // give notification sound time to finish
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            stopSelf();
+                        }
+                    }, 5 * DateUtils.SECOND_IN_MILLIS);
+                }
             }
         } else {
-            command_sent = false;
+            if (locationChanged == status.LEAVING) {
+                notifyUpdate("Leaving home", uriAlert);
+            }
+            locationChanged = status.TRAVELING;
             // tune data rate to preserve battery
             if (distance < radius_high) {
                 // inside the high radius, open socket and switch to high rate
@@ -352,7 +374,7 @@ public class GarageDoorService extends Service implements LocationListener {
                 }
                 if (rate != RATE_HIGH) {
                     log(position);
-                    notifyUpdate("Switching to high rate", uriAlert, rate == RATE_START);
+                    notifyUpdate("Switching to high rate");
                     locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_high * DateUtils.SECOND_IN_MILLIS, 0,
                                                            this);
                     rate = RATE_HIGH;
@@ -370,7 +392,7 @@ public class GarageDoorService extends Service implements LocationListener {
                 if (distance < radius_low) {
                     if (rate != RATE_MED) {
                         log(position);
-                        notifyUpdate("Switching to medium rate", uriAlert, rate == RATE_START);
+                        notifyUpdate("Switching to medium rate");
                         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_med * DateUtils.SECOND_IN_MILLIS, 0,
                                                                this);
                         rate = RATE_MED;
@@ -380,7 +402,7 @@ public class GarageDoorService extends Service implements LocationListener {
                 } else {
                     if (rate != RATE_LOW) {
                         log(position);
-                        notifyUpdate("Switching to low rate", uriAlert, rate == RATE_START);
+                        notifyUpdate("Switching to low rate");
                         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_low * DateUtils.SECOND_IN_MILLIS, 0,
                                                                this);
                         rate = RATE_LOW;
@@ -558,8 +580,7 @@ public class GarageDoorService extends Service implements LocationListener {
 
     // request location updates from GPS
     void setupGPS() {
-        command_sent = false;
-        locationChanged = false;
+        locationChanged = status.UNINITIALIZED;
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, interval_high * DateUtils.SECOND_IN_MILLIS, 0, this);
         startGPS = System.currentTimeMillis();
         notifyUpdate("Waiting for GPS");
@@ -611,10 +632,7 @@ public class GarageDoorService extends Service implements LocationListener {
         BufferedReader buffRdr;
         String response;
 
-        if (command_sent || stop) {
-            return;
-        }
-        while (!stop && !command_sent) {
+        while (!stop && locationChanged != status.RETURNED && locationChanged != status.LEAVING) {
             try {
                 if (sock == null) {
                     OpenSocket();
@@ -624,7 +642,6 @@ public class GarageDoorService extends Service implements LocationListener {
                 response = buffRdr.readLine();
                 if (response.equals(command + " DONE")) {
                     log("OpenDoor response received");
-                    command_sent = true;
                     break;
                 } else {
                     log("invalid OpenDoor response: " + response);
