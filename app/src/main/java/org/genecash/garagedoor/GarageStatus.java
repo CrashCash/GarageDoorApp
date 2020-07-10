@@ -17,7 +17,6 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Arrays;
 
 import javax.net.ssl.SSLSocketFactory;
 
@@ -126,8 +125,6 @@ public class GarageStatus extends Activity {
 
             try {
                 sockStatus = sslSocketFactory.createSocket(host, port);
-                sockCommand = sslSocketFactory.createSocket(host, port);
-                // sockStatus.getInputStream takes about 2 seconds because of the SSL handshake
                 BufferedReader br = new BufferedReader(new InputStreamReader(sockStatus.getInputStream(), "ASCII"));
                 if (br.readLine().equals(Utilities.RESPONSE)) {
                     sockStatus.getOutputStream().write("STATUS\n".getBytes());
@@ -136,7 +133,7 @@ public class GarageStatus extends Activity {
                     while (!isCancelled()) {
                         try {
                             status = br.readLine();
-                            log("Status: " + status);
+                            log(status);
                             if (status == null) {
                                 // server has closed connection
                                 publishProgress("error", "Connection closed");
@@ -163,7 +160,6 @@ public class GarageStatus extends Activity {
 
         @Override
         protected void onProgressUpdate(String... values) {
-            log(Arrays.toString(values));
             if (values[0].equals("error")) {
                 // error message from exception
                 Toast.makeText(ctx, values[1], Toast.LENGTH_LONG).show();
@@ -216,16 +212,15 @@ public class GarageStatus extends Activity {
         @Override
         protected Void doInBackground(String... params) {
             try {
+                sockCommand = sslSocketFactory.createSocket(host, port);
                 if (sockCommand != null) {
                     sockCommand.getOutputStream().write((params[0] + "\n").getBytes());
+                } else {
+                    publishProgress("No command given!");
                 }
+                sockCommand.close();
             } catch (Exception e) {
                 publishProgress(e.getMessage());
-                try {
-                    sockCommand = sslSocketFactory.createSocket(host, port);
-                } catch (Exception e1) {
-                    publishProgress(e1.getMessage());
-                }
             }
             return null;
         }
