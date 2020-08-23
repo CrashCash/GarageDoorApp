@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
+import android.text.format.DateUtils;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
@@ -23,6 +24,7 @@ import javax.net.ssl.SSLSocketFactory;
 import static org.genecash.garagedoor.Utilities.log;
 import static org.genecash.garagedoor.Utilities.setAirplaneModeActive;
 import static org.genecash.garagedoor.Utilities.setupLogging;
+import static org.genecash.garagedoor.Utilities.sleep;
 import static org.genecash.garagedoor.Utilities.stopLogging;
 
 public class GarageStatus extends Activity {
@@ -123,37 +125,43 @@ public class GarageStatus extends Activity {
             String status;
             String[] statuses;
 
-            try {
-                sockStatus = sslSocketFactory.createSocket(host, port);
-                BufferedReader br = new BufferedReader(new InputStreamReader(sockStatus.getInputStream(), "ASCII"));
-                if (br.readLine().equals(Utilities.RESPONSE)) {
-                    sockStatus.getOutputStream().write("STATUS\n".getBytes());
+            while (!isCancelled()) {
+                try {
+                    sockStatus = sslSocketFactory.createSocket(host, port);
+                    BufferedReader br = new BufferedReader(new InputStreamReader(sockStatus.getInputStream(), "ASCII"));
+                    if (br.readLine().equals(Utilities.RESPONSE)) {
+                        sockStatus.getOutputStream().write("STATUS\n".getBytes());
 
-                    // read status changes until we exit
-                    while (!isCancelled()) {
-                        try {
-                            status = br.readLine();
-                            log(status);
-                            if (status == null) {
-                                // server has closed connection
-                                publishProgress("error", "Connection closed");
+                        // read status changes until we exit
+                        while (!isCancelled()) {
+                            try {
+                                status = br.readLine();
+                                log(status);
+                                if (status == null) {
+                                    // server has closed connection
+                                    publishProgress("error", "Connection closed");
+                                    break;
+                                }
+                                statuses = status.split("\\s+");
+                                if (statuses[0].equals("STATUS")) {
+                                    publishProgress("status", statuses[1], statuses[2], statuses[3], statuses[4]);
+                                }
+                            } catch (Exception e) {
+                                publishProgress("error", e.toString());
                                 break;
                             }
-                            statuses = status.split("\\s+");
-                            if (statuses[0].equals("STATUS")) {
-                                publishProgress("status", statuses[1], statuses[2], statuses[3], statuses[4]);
-                            }
-                        } catch (Exception e) {
-                            publishProgress("error", e.toString());
-                            break;
                         }
+                    } else {
+                        publishProgress("error", "Invalid response");
+                        // don't flood the logs
+                        sleep(5*DateUtils.SECOND_IN_MILLIS);
                     }
-                } else {
-                    publishProgress("error", "Invalid response");
+                    sockStatus.close();
+                } catch (Exception e) {
+                    publishProgress("error", e.getMessage());
+                    // don't flood the logs
+                    sleep(5*DateUtils.SECOND_IN_MILLIS);
                 }
-                sockStatus.close();
-            } catch (Exception e) {
-                publishProgress("error", e.getMessage());
             }
             return null;
         }
@@ -164,45 +172,51 @@ public class GarageStatus extends Activity {
                 // error message from exception
                 Toast.makeText(ctx, values[1], Toast.LENGTH_LONG).show();
                 log("GetStatus error: " + values[1]);
-            } else if (values[0].equals("status")) {
-                // roll-up door
-                String status = values[1];
-                if ("TRANSIT".equals(status)) {
-                    btn_roll.setImageResource(R.drawable.barberpole_gray);
-                } else if ("CLOSED".equals(status)) {
-                    btn_roll.setImageResource(R.drawable.solid_green);
-                } else if ("OPEN".equals(status)) {
-                    btn_roll.setImageResource(R.drawable.solid_red);
-                } else {
-                    btn_roll.setImageResource(R.drawable.barberpole_red);
-                }
-                // back door
+                values[1] = "unknown";
+            }
+            // roll-up door
+            String status = values[1];
+            if ("TRANSIT".equals(status)) {
+                btn_roll.setImageResource(R.drawable.barberpole_gray);
+            } else if ("CLOSED".equals(status)) {
+                btn_roll.setImageResource(R.drawable.solid_green);
+            } else if ("OPEN".equals(status)) {
+                btn_roll.setImageResource(R.drawable.solid_red);
+            } else {
+                btn_roll.setImageResource(R.drawable.barberpole_red);
+            }
+            // back door
+            if (values.length > 2) {
                 status = values[2];
-                if ("CLOSED".equals(status)) {
-                    btn_door.setImageResource(R.drawable.solid_green);
-                } else if ("OPEN".equals(status)) {
-                    btn_door.setImageResource(R.drawable.solid_red);
-                } else {
-                    btn_door.setImageResource(R.drawable.barberpole_red);
-                }
-                // photoelectric beam
+            }
+            if ("CLOSED".equals(status)) {
+                btn_door.setImageResource(R.drawable.solid_green);
+            } else if ("OPEN".equals(status)) {
+                btn_door.setImageResource(R.drawable.solid_red);
+            } else {
+                btn_door.setImageResource(R.drawable.barberpole_red);
+            }
+            // photoelectric beam
+            if (values.length > 3) {
                 status = values[3];
-                if ("CLEAR".equals(status)) {
-                    btn_beam.setImageResource(R.drawable.solid_green);
-                } else if ("BLOCKED".equals(status)) {
-                    btn_beam.setImageResource(R.drawable.solid_red);
-                } else {
-                    btn_roll.setImageResource(R.drawable.barberpole_red);
-                }
-                // armed status
+            }
+            if ("CLEAR".equals(status)) {
+                btn_beam.setImageResource(R.drawable.solid_green);
+            } else if ("BLOCKED".equals(status)) {
+                btn_beam.setImageResource(R.drawable.solid_red);
+            } else {
+                btn_beam.setImageResource(R.drawable.barberpole_red);
+            }
+            // armed status
+            if (values.length > 4) {
                 status = values[4];
-                if ("DISARMED".equals(status)) {
-                    btn_armed.setImageResource(R.drawable.solid_green);
-                } else if ("ARMED".equals(status)) {
-                    btn_armed.setImageResource(R.drawable.solid_red);
-                } else {
-                    btn_roll.setImageResource(R.drawable.barberpole_red);
-                }
+            }
+            if ("DISARMED".equals(status)) {
+                btn_armed.setImageResource(R.drawable.solid_green);
+            } else if ("ARMED".equals(status)) {
+                btn_armed.setImageResource(R.drawable.solid_red);
+            } else {
+                btn_armed.setImageResource(R.drawable.barberpole_red);
             }
         }
     }

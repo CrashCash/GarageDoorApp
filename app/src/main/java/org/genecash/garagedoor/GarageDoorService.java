@@ -70,7 +70,7 @@ public class GarageDoorService extends Service implements LocationListener {
     // notifications
     NotificationManager notifyManager;
     Builder notifyBuilder;
-    Uri uriRingtone;
+    Uri uriDing;
     Uri uriAlert;
     MediaPlayer player = null;
     boolean sound;
@@ -191,7 +191,7 @@ public class GarageDoorService extends Service implements LocationListener {
         startForeground(NOTIFICATION_ID, notifyBuilder.build());
 
         // custom sounds
-        uriRingtone = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        uriDing = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         uriAlert = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + getPackageName() + "/" + R.raw.whistle);
 
         registerReceiver(broadcastReceiverStop, new IntentFilter(Utilities.ACTION_STOP));
@@ -323,7 +323,7 @@ public class GarageDoorService extends Service implements LocationListener {
             int minutes = (int) ((millis / (1000 * 60)) % 60);
             // int hours   = (int) ((millis / (1000 * 60 * 60)) % 24);
             String time = String.format("%d:%02d", minutes, seconds);
-            notifyUpdate("GPS acquired: " + time, uriRingtone);
+            notifyUpdate("GPS acquired: " + time, uriDing);
             log(position);
             locationChanged = status.STARTED;
         }
@@ -337,12 +337,13 @@ public class GarageDoorService extends Service implements LocationListener {
 
                 if (locationChanged == status.STARTED) {
                     locationChanged = status.LEAVING;
+                    log("Leaving home");
                 }
 
                 if (locationChanged == status.TRAVELING) {
                     locationChanged = status.RETURNED;
                     stop = true;
-                    log("exiting due to trip complete");
+                    log("Exiting due to trip complete");
 
                     // pretty-print the total trip time
                     long millis = System.currentTimeMillis() - startGPS;
@@ -362,10 +363,12 @@ public class GarageDoorService extends Service implements LocationListener {
                 }
             }
         } else {
-            if (locationChanged == status.LEAVING) {
-                notifyUpdate("Leaving home", uriAlert);
+            if (distance > 1.5 * radius_open) {
+                if (locationChanged == status.LEAVING) {
+                    notifyUpdate("Left home");
+                }
+                locationChanged = status.TRAVELING;
             }
-            locationChanged = status.TRAVELING;
             // tune data rate to preserve battery
             if (distance < radius_high) {
                 // inside the high radius, open socket and switch to high rate
@@ -522,7 +525,7 @@ public class GarageDoorService extends Service implements LocationListener {
 
     void logExcept(Exception e) {
         Utilities.logExcept(e);
-        notifyUpdate("exception\n" + e.getMessage());
+        notifyUpdate("Exception: " + e.getMessage(), uriDing);
     }
 
     // update notification
@@ -553,7 +556,7 @@ public class GarageDoorService extends Service implements LocationListener {
                 player.setLooping(false);
                 player.start();
             } catch (Exception e) {
-                Utilities.logExcept(e);
+                logExcept(e);
             }
         }
     }
@@ -623,6 +626,7 @@ public class GarageDoorService extends Service implements LocationListener {
         try {
             sock.close();
         } catch (Exception e) {
+            logExcept(e);
         }
         sock = null;
     }

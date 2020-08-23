@@ -188,11 +188,13 @@ public class GarageSettings extends Activity {
                 @Override
                 public void onLocationChanged(Location location) {
                     ctx.location = location;
-                    DecimalFormat df = new DecimalFormat("####0.0000");
-                    df.setRoundingMode(RoundingMode.HALF_UP);
+                    DecimalFormat posnFmt = new DecimalFormat("#.######");
+                    posnFmt.setRoundingMode(RoundingMode.HALF_UP);
+                    DecimalFormat distFmt = new DecimalFormat("#.##");
+                    distFmt.setRoundingMode(RoundingMode.HALF_UP);
 
                     double lat = location.getLatitude();
-                    String slat = df.format(Math.abs(lat)) + Utilities.DEGREE;
+                    String slat = posnFmt.format(Math.abs(lat)) + Utilities.DEGREE;
                     if (lat < 0) {
                         slat += "S";
                     } else {
@@ -200,7 +202,7 @@ public class GarageSettings extends Activity {
                     }
 
                     double lon = location.getLongitude();
-                    String slon = df.format(Math.abs(lon)) + Utilities.DEGREE;
+                    String slon = posnFmt.format(Math.abs(lon)) + Utilities.DEGREE;
                     if (lon < 0) {
                         slon += "W";
                     } else {
@@ -215,9 +217,7 @@ public class GarageSettings extends Activity {
                         loc.setLatitude(Location.convert((edLatitude.getText().toString())));
                         loc.setLongitude(Location.convert((edLongitude.getText().toString())));
                         float distance = location.distanceTo(loc);
-                        df = new DecimalFormat("####0");
-                        df.setRoundingMode(RoundingMode.HALF_UP);
-                        text += " (" + df.format(distance) + " meters)";
+                        text += " (" + distFmt.format(distance) + " meters)";
                         bGPS.setText(text);
                     } catch (Exception e) {
                         log("Error setting button: " + Log.getStackTraceString(e));

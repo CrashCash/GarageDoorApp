@@ -12,6 +12,7 @@ import android.widget.Toast;
 
 import java.io.FileInputStream;
 import java.security.KeyStore;
+import java.util.Arrays;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
@@ -80,7 +81,7 @@ public class Utilities {
 
             return context.getSocketFactory();
         } catch (Exception e) {
-            Log.e(TAG, "Exception: " + Log.getStackTraceString(e));
+            logExcept(e);
             Toast.makeText(ctx, "Could not initialize SSL: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
         return null;
@@ -208,11 +209,19 @@ public class Utilities {
 
     // figure out where info was logged
     static String whereami() {
-        StackTraceElement ste = Thread.currentThread().getStackTrace()[4];
-        String c = ste.getClassName();
-        c = c.substring(c.lastIndexOf(".") + 1);
-        String m = ste.getMethodName();
-        return c + ":" + m + ": ";
+        int depth = 0;
+        String call_class, call_method;
+        // methods to skip when looking for current method
+        String[] methods = {"getThreadStackTrace", "getStackTrace", "whereami", "logExcept"};
+
+        do {
+            StackTraceElement ste = Thread.currentThread().getStackTrace()[depth];
+            call_class = ste.getClassName();
+            call_class = call_class.substring(call_class.lastIndexOf(".") + 1);
+            call_method = ste.getMethodName();
+            depth++;
+        } while (Arrays.asList(methods).contains(call_method));
+        return call_class + ":" + call_method + ": ";
     }
 
     // log to our own file so that messages don't get lost
