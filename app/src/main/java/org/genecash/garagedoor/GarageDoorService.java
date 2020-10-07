@@ -76,7 +76,6 @@ public class GarageDoorService extends Service implements LocationListener {
     boolean sound;
     static final int NOTIFICATION_ID = 1;
     long lastWhistle = 0;
-    String lastNotification = "";
 
     // network info
     String hostname;
@@ -533,15 +532,12 @@ public class GarageDoorService extends Service implements LocationListener {
         if (flag) {
             audio = null;
         }
-        if (msg == null) {
-            msg = lastNotification;
-        } else {
-            lastNotification = msg;
-            log(msg);
-        }
 
         // you're allowed only 2 lines
-        notifyBuilder.setContentText(msg);
+        if (msg!=null) {
+            notifyBuilder.setContentText(msg);
+            log(msg);
+        }
         notifyManager.notify(NOTIFICATION_ID, notifyBuilder.build());
         if (audio != null && sound) {
             // wait for previous sound to finish

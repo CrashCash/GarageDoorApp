@@ -4,6 +4,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.MediaPlayer;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
@@ -33,6 +36,8 @@ public class GarageDoorOpen extends Activity {
     String command = "OPENCLOSE";
     String logname = "arm";
     Socket sock;
+    MediaPlayer player = null;
+    Uri uriDing;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,7 +45,7 @@ public class GarageDoorOpen extends Activity {
         setContentView(R.layout.app);
 
         setupLogging(this, logname);
-
+        uriDing = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         // pull network preferences
@@ -90,10 +95,14 @@ public class GarageDoorOpen extends Activity {
                     sock.close();
                     continue;
                 }
+            } catch (java.net.ConnectException e) {
+                log(e.getMessage());
+                errors++;
             } catch (Exception e) {
                 logExcept(e);
             }
             // don't spam the living hell out of the logs
+            ding();
             sleep(DateUtils.SECOND_IN_MILLIS);
         }
 
@@ -101,8 +110,37 @@ public class GarageDoorOpen extends Activity {
             Toast.makeText(this, "Giving up", Toast.LENGTH_LONG).show();
             log("retries exhausted");
         }
+
+        soundWait();
+        if (player != null) {
+            player.release();
+        }
         stopLogging();
         finish();
     }
+
+    void ding() {
+        soundWait();
+
+        // play sound
+        if (player != null) {
+            player.release();
+        }
+        try {
+            player = new MediaPlayer().create(this, uriDing);
+            player.setLooping(false);
+            player.start();
+        } catch (Exception e) {
+            logExcept(e);
+        }
+    }
+
+    // wait for notification sound/vibration to finish playing
+    void soundWait() {
+        while (player != null && player.isPlaying()) {
+            sleep(DateUtils.SECOND_IN_MILLIS);
+        }
+    }
 }
+
 
